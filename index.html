@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How Far Does Social Security Go? Comparing Benefits to Elder Index 2025</title>
+<meta name="description" content="Interactive companion to the UMass Boston Gerontology Institute infographic comparing Social Security benefits to the Elder Index across all 50 states and DC." />
+
+<!-- Google Fonts: Montserrat (headings) + Open Sans (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+
+<!-- D3 + TopoJSON via CDN (only the US map geometry is fetched at runtime; ALL benefit/index data is baked in) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+
+<style>
+:root{
+  --navy:#003865;        /* UMass Boston primary */
+  --navy-2:#0a4d80;
+  --gold:#F2A900;        /* UMass Boston accent */
+  --gold-dark:#c98a00;
+  --bg:#F5F5F5;
+  --card:#ffffff;
+  --ink:#1d2733;
+  --muted:#5b6b7b;
+  --line:#e3e8ee;
+  --red:#c0392b;
+  --green:#1e8449;
+  --shadow:0 2px 10px rgba(0,40,80,.08), 0 1px 3px rgba(0,40,80,.06);
+  --shadow-lg:0 8px 30px rgba(0,40,80,.12);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Open Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  line-height:1.55;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.h{font-family:"Montserrat",system-ui,sans-serif;color:var(--navy);margin:0 0 .4em}
+h1{font-weight:800;line-height:1.12}
+h2{font-weight:700;font-size:clamp(1.5rem,2.6vw,2.1rem)}
+h3{font-weight:700;font-size:1.15rem}
+a{color:var(--navy-2)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* ---------- Sticky nav ---------- */
+#nav{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18)}
+#nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+#nav .brand{display:flex;align-items:center;gap:12px;font-family:"Montserrat";font-weight:700;font-size:.98rem;color:#fff;text-decoration:none}
+#nav .brand .mark{width:34px;height:34px;border-radius:7px;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:800;font-size:1.15rem}
+#nav .links{display:flex;gap:6px;flex-wrap:wrap}
+#nav .links a{color:#dbe7f2;text-decoration:none;padding:8px 14px;border-radius:8px;font-weight:600;font-size:.92rem;transition:.18s}
+#nav .links a:hover{background:rgba(255,255,255,.12);color:#fff}
+#nav .links a.active{background:var(--gold);color:var(--navy)}
+
+/* ---------- Section scaffolding ---------- */
+section{padding:64px 0;scroll-margin-top:70px}
+.section-tag{display:inline-block;font-family:"Montserrat";font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.72rem;color:var(--gold-dark);background:#fff3d6;border:1px solid #f6dfa0;padding:5px 12px;border-radius:999px;margin-bottom:14px}
+.lead{color:var(--muted);max-width:760px;font-size:1.05rem}
+.divider{height:6px;background:linear-gradient(90deg,var(--navy),var(--gold));opacity:.9}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:22px}
+
+/* ---------- Info tooltip (ⓘ) ---------- */
+.info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;
+  background:var(--navy);color:#fff;font-size:11px;font-weight:700;cursor:help;position:relative;margin-left:6px;vertical-align:middle;font-family:"Open Sans"}
+.info:focus{outline:2px solid var(--gold)}
+.info .tip{visibility:hidden;opacity:0;position:absolute;bottom:140%;left:50%;transform:translateX(-50%);
+  width:240px;background:#10212f;color:#eef4f9;font-size:.78rem;line-height:1.45;font-weight:400;
+  padding:10px 12px;border-radius:8px;box-shadow:var(--shadow-lg);transition:.15s;z-index:30;text-transform:none;letter-spacing:0}
+.info:hover .tip,.info:focus .tip{visibility:visible;opacity:1}
+.info .tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#10212f}
+
+/* ---------- Infographic ---------- */
+#infographic{background:
+   radial-gradient(1200px 380px at 80% -120px, rgba(242,169,0,.10), transparent 60%),
+   linear-gradient(180deg,#fff, var(--bg) 360px)}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center}
+.hero .kicker{color:var(--gold-dark);font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem;margin-bottom:10px}
+.hero h1{font-size:clamp(1.9rem,4vw,3rem)}
+.hero p{color:var(--muted);font-size:1.06rem}
+.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.stat{background:var(--navy);color:#fff;border-radius:14px;padding:20px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.stat.gold{background:linear-gradient(135deg,var(--gold),#e59a00);color:#26303a}
+.stat .num{font-family:"Montserrat";font-weight:800;font-size:2.2rem;line-height:1}
+.stat .lab{font-size:.86rem;opacity:.92;margin-top:8px}
+
+.btn{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:var(--navy);border:none;
+  font-family:"Montserrat";font-weight:700;font-size:.92rem;padding:11px 18px;border-radius:10px;cursor:pointer;box-shadow:var(--shadow);transition:.16s}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.btn.secondary{background:#fff;color:var(--navy);border:1px solid var(--line)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+
+/* gap bars */
+.gapbar{margin:14px 0 4px}
+.gapbar .track{height:30px;border-radius:8px;overflow:hidden;display:flex;background:#eef2f6;border:1px solid var(--line)}
+.gapbar .cov{background:linear-gradient(90deg,var(--navy),var(--navy-2));color:#fff}
+.gapbar .unc{background:repeating-linear-gradient(45deg,#f2dede,#f2dede 8px,#f7e7e7 8px,#f7e7e7 16px);color:var(--red)}
+.gapbar .seg{display:flex;align-items:center;font-size:.78rem;font-weight:700;padding:0 10px;white-space:nowrap;transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
+.gapbar .capt{display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);margin-top:6px}
+
+/* then vs now */
+.tvn{background:linear-gradient(135deg,#06283d,#003865);color:#fff;border-radius:16px;padding:24px}
+.tvn h3{color:#fff}
+.tvn .row{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+.tvn .row:last-child{border-bottom:none}
+.tvn .old{color:#9fb6c9;text-decoration:line-through;text-decoration-color:var(--gold);text-decoration-thickness:2px}
+.tvn .new{color:var(--gold);font-family:"Montserrat";font-weight:800;font-size:1.25rem}
+.tvn .arrow{color:#9fb6c9}
+
+/* state cards */
+.statecards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.scard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow);position:relative}
+.scard .pct{font-family:"Montserrat";font-weight:800;font-size:1.7rem}
+.scard.least .pct{color:var(--red)}
+.scard.most .pct{color:var(--green)}
+.scard .nm{font-weight:700;font-size:.82rem;margin-top:4px;text-transform:uppercase;letter-spacing:.03em}
+.scard .mini{height:5px;border-radius:3px;margin-top:9px;background:#eef2f6;overflow:hidden}
+.scard .mini i{display:block;height:100%;border-radius:3px}
+
+/* comparison table */
+table.cmp{width:100%;border-collapse:collapse;font-size:.92rem}
+table.cmp th,table.cmp td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line)}
+table.cmp th:first-child,table.cmp td:first-child{text-align:left}
+table.cmp thead th{background:var(--navy);color:#fff;font-family:"Montserrat"}
+table.cmp tbody tr.yr td{background:#eaf1f7;font-weight:700;color:var(--navy)}
+table.cmp td.k{color:var(--muted)}
+
+.bullets{list-style:none;padding:0;margin:0}
+.bullets li{position:relative;padding:8px 0 8px 28px;border-bottom:1px dashed var(--line)}
+.bullets li::before{content:"";position:absolute;left:4px;top:15px;width:10px;height:10px;border-radius:50%;background:var(--gold)}
+
+/* ---------- Dashboard ---------- */
+#dashboard{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.controls{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;margin:8px 0 18px}
+.ctl label{display:block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+.segbtn{display:inline-flex;background:#eef2f6;border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.segbtn button{border:none;background:transparent;font-family:"Montserrat";font-weight:600;font-size:.86rem;color:var(--muted);
+  padding:8px 14px;border-radius:8px;cursor:pointer;transition:.15s}
+.segbtn button.on{background:var(--navy);color:#fff;box-shadow:var(--shadow)}
+
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.summary .s{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px}
+.summary .s .v{font-family:"Montserrat";font-weight:800;font-size:1.6rem;color:var(--navy)}
+.summary .s .l{font-size:.78rem;color:var(--muted);margin-top:4px}
+
+.dash-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
+#map-wrap{position:relative;min-height:420px}
+#map svg{width:100%;height:auto;display:block}
+#map path.state{stroke:#fff;stroke-width:.6;cursor:pointer;transition:opacity .2s, stroke .15s}
+#map path.state:hover{stroke:var(--navy);stroke-width:1.6}
+#map path.state.sel{stroke:var(--gold);stroke-width:2.4}
+.maploading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.9rem;text-align:center}
+.spinner{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--navy);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.legend{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.legend .bar{height:12px;width:220px;border-radius:6px;background:linear-gradient(90deg,#c0392b,#f39c12,#f1c40f,#7dc34f,#1e8449)}
+
+.panel{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px;min-height:120px}
+.panel .pname{font-family:"Montserrat";font-weight:800;font-size:1.2rem;color:var(--navy)}
+.panel .pcov{font-family:"Montserrat";font-weight:800;font-size:2rem}
+.panel .prow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.panel .prow span:first-child{color:var(--muted)}
+.panel .prow b{font-family:"Montserrat"}
+
+#bars svg{width:100%;height:auto}
+#bars .barrow text{font-size:10px;fill:var(--ink)}
+#bars .reff{stroke:var(--navy);stroke-dasharray:4 3;stroke-width:1.5}
+#bars .refl{font-family:"Montserrat";font-size:10px;fill:var(--navy);font-weight:700}
+#bars rect.b{cursor:pointer}
+#bars rect.b.sel{stroke:var(--gold);stroke-width:2}
+
+.method{font-size:.76rem;color:var(--muted);background:#f8fafc;border:1px solid var(--line);border-left:3px solid var(--gold);
+  border-radius:8px;padding:10px 14px;margin-top:18px;line-height:1.5}
+
+/* ---------- Calculator ---------- */
+#calculator{background:linear-gradient(180deg,var(--bg),#fff)}
+.calc-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:24px;align-items:start}
+.form .field{margin-bottom:16px}
+.form label.fl{display:block;font-size:.8rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+.form select,.form input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:.95rem;background:#fff}
+.form select:focus,.form input:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+.form .hint{font-size:.74rem;color:var(--muted);margin-top:4px}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.out{background:var(--navy);color:#fff;border-radius:16px;padding:24px;box-shadow:var(--shadow-lg)}
+.out h3{color:#fff}
+.out .big{font-family:"Montserrat";font-weight:800;font-size:2.6rem;line-height:1;margin:4px 0}
+.out .verdict{display:inline-block;padding:5px 12px;border-radius:999px;font-weight:700;font-size:.82rem;margin-bottom:6px}
+.out .verdict.gap{background:rgba(192,57,43,.22);color:#ffb4ab;border:1px solid #c0392b}
+.out .verdict.sur{background:rgba(30,132,73,.22);color:#9be7b4;border:1px solid #1e8449}
+.out .orow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.13);font-size:.94rem}
+.out .orow span{color:#bcd0e2}
+.out .orow b{font-family:"Montserrat"}
+.out .cbar{height:26px;border-radius:8px;overflow:hidden;display:flex;background:rgba(255,255,255,.12);margin:14px 0 4px}
+.out .cbar i{display:flex;align-items:center;font-size:.74rem;font-weight:700;padding:0 8px;transition:width .6s ease;white-space:nowrap}
+.out .cbar .c{background:var(--gold);color:var(--navy)}
+.out .cbar .u{background:#c0392b;color:#fff}
+.interp{background:#eaf1f7;border:1px solid #cfe0ee;border-radius:12px;padding:16px 18px;color:#143b5e;font-size:1rem;line-height:1.6}
+.context{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.context .c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.context .c .n{font-family:"Montserrat";font-weight:800;font-size:1.5rem;color:var(--navy)}
+.context .c .l{font-size:.74rem;color:var(--muted);margin-top:3px}
+
+/* ---------- Footer ---------- */
+footer{background:var(--navy);color:#cfe0ee;padding:36px 0}
+footer .wrap{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:center}
+footer .mark{display:flex;align-items:center;gap:12px}
+footer .mark .b{width:46px;height:46px;border-radius:9px;background:#fff;color:var(--navy);display:grid;place-items:center;font-family:"Montserrat";font-weight:800;font-size:1.4rem}
+footer a{color:var(--gold)}
+footer small{display:block;color:#9fb6c9;margin-top:6px;font-size:.8rem}
+
+/* fallback notice */
+#notice{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#10212f;color:#fff;font-size:.84rem;
+  padding:10px 16px;border-radius:10px;box-shadow:var(--shadow-lg);z-index:80;display:none;max-width:90vw}
+#notice b{color:var(--gold)}
+
+/* ---------- Responsive ---------- */
+@media(max-width:900px){
+  .hero,.grid2,.dash-grid,.calc-grid{grid-template-columns:1fr}
+  .summary{grid-template-columns:repeat(2,1fr)}
+  .statecards{grid-template-columns:repeat(2,1fr)}
+  .grid3{grid-template-columns:1fr}
+  #nav .brand span{display:none}
+}
+@media(max-width:520px){
+  .statgrid{grid-template-columns:1fr}
+  .context{grid-template-columns:1fr}
+  .out .big{font-size:2.1rem}
+}
+
+/* ====================================================================
+   PDF-FAITHFUL INFOGRAPHIC (recreates the slide layout; interactive)
+   ==================================================================== */
+#infographic{padding:34px 0 0}
+.pdf-slide{max-width:1180px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow-lg);overflow:hidden}
+/* title bar */
+.pdf-title{background:var(--navy);color:#fff;padding:16px 26px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.pdf-title h1{color:#fff;font-size:clamp(1.25rem,2.3vw,1.85rem);margin:0;line-height:1.15}
+.pdf-title h1 span{display:block;font-weight:600;font-size:.62em;opacity:.85;margin-top:3px}
+.pdf-title .btn{flex:none}
+/* 3-column grid */
+.pdf-cols{display:grid;grid-template-columns:1.05fr 1.18fr 1.05fr;gap:0}
+.pdf-cols > div{padding:20px 22px}
+.pdf-left{border-right:1px solid var(--line)}
+.pdf-center{border-right:1px solid var(--line);background:#fcfdfe}
+.pdf-cols h4{font-family:"Montserrat";font-weight:700;font-size:.82rem;color:var(--navy);margin:16px 0 8px;line-height:1.25}
+.pdf-cols h4 .least{color:var(--red)} .pdf-cols h4 .most{color:var(--green)}
+.bullets.small li{font-size:.82rem;padding:6px 0 6px 24px}
+.bullets.small li::before{top:12px;width:8px;height:8px}
+
+/* silhouette state cards */
+.silcards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sil{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 4px 9px;text-align:center;cursor:pointer;
+  transition:.15s;position:relative}
+.sil:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--gold)}
+.sil:focus{outline:2px solid var(--gold)}
+.sil svg{width:100%;height:38px;display:block}
+.sil svg path{transition:.15s}
+.sil .pct{font-family:"Montserrat";font-weight:800;font-size:1.15rem;margin-top:3px}
+.sil.least .pct{color:var(--red)} .sil.most .pct{color:var(--green)}
+.sil .nm{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);margin-top:1px}
+.sil .clickdot{position:absolute;top:5px;right:6px;width:13px;height:13px;border-radius:50%;background:var(--gold);color:var(--navy);
+  font-size:9px;font-weight:800;display:grid;place-items:center;opacity:.0;transition:.15s}
+.sil:hover .clickdot{opacity:1}
+
+/* US avg block */
+.usavg{display:flex;align-items:center;gap:10px;margin-top:18px;padding-top:14px;border-top:1px dashed var(--line)}
+.usavg .ussil{width:74px;height:44px;flex:none}
+.usavg .ussil svg{width:100%;height:100%}
+.usavg .arrow{color:#3a78b5;font-size:1.5rem;font-weight:800}
+.usavg .avgtag{font-family:"Montserrat";font-weight:800;color:var(--navy);font-size:1.05rem;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:9px;transition:.15s}
+.usavg .avgtag:hover{background:#eaf1f7}
+.usavg .avgtag .info-dot{width:17px;height:17px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;display:grid;place-items:center}
+
+/* center map */
+.pdf-map-wrap{position:relative}
+#pdf-map{min-height:200px}
+#pdf-map svg{width:100%;height:auto;display:block}
+#pdf-map path.pstate{stroke:#fff;stroke-width:.5}
+.pdf-legend{margin-top:6px;font-size:.72rem;color:var(--ink)}
+.pdf-legend .lt{font-weight:700;color:var(--navy);margin-bottom:4px;font-family:"Montserrat";font-size:.74rem}
+.pdf-legend .lrow{display:flex;align-items:center;gap:7px;padding:1px 0;color:var(--muted)}
+.pdf-legend .sw{width:22px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.08)}
+.pdf-legend .sw.low{background:#fdebc8}
+.pdf-legend .sw.mid{background:#ef9c43}
+.pdf-legend .sw.high{background:#b5470f}
+.pdf-mapnote{font-size:.66rem;color:var(--muted);margin-top:5px;font-style:italic}
+
+/* right column: comparison table + then-vs-now */
+.cmp-head{background:var(--navy);color:#fff;font-family:"Montserrat";font-weight:700;font-size:.78rem;padding:9px 12px;border-radius:9px 9px 0 0;line-height:1.25}
+.cmp-wrap{border:1px solid var(--line);border-top:none;border-radius:0 0 9px 9px;overflow:hidden}
+.cmp-wrap table.cmp{font-size:.82rem}
+.cmp-wrap table.cmp th,.cmp-wrap table.cmp td{padding:7px 10px}
+table.cmp tbody tr.yr{cursor:pointer}
+table.cmp tbody tr.yr:hover td{background:#dce9f4}
+table.cmp tbody tr.hl td{background:#fff3d6 !important}
+table.cmp tbody tr.yr td .ytag{float:right;font-size:.62rem;color:var(--gold-dark);font-weight:700}
+.tvn{cursor:pointer;margin-top:16px;transition:.15s}
+.tvn:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.tvn .clickhint{display:inline-block;font-size:.66rem;color:var(--gold);font-weight:700;margin-top:10px;text-transform:uppercase;letter-spacing:.05em}
+
+/* gap-bar strip */
+.pdf-gaps{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:20px 22px;border-top:1px solid var(--line);background:#fafcfe}
+.pdf-gaps .gapbar{margin:0}
+.pdf-gaps h4{font-family:"Montserrat";font-size:.84rem;color:var(--navy);margin:0 0 8px;display:flex;align-items:center;gap:6px}
+.gapbar.clickable .track{cursor:pointer}
+.gapbar.clickable:hover .track{outline:2px solid var(--gold);outline-offset:1px}
+
+/* bottom banner */
+.pdf-banner{display:flex;align-items:center;justify-content:space-between;gap:24px;
+  background:linear-gradient(90deg,var(--navy) 62%, var(--gold) 62%);color:#fff;padding:22px 26px}
+.pdf-banner p{margin:0;font-size:clamp(.95rem,1.5vw,1.15rem);font-weight:600;max-width:60%;line-height:1.4}
+.pdf-logo{display:flex;align-items:center;gap:12px;color:#26303a}
+.pdf-logo .b{width:52px;height:52px;border-radius:10px;background:#fff;color:var(--navy);display:grid;place-items:center;font-family:"Montserrat";font-weight:800;font-size:1.7rem;flex:none}
+.pdf-logo strong{display:block;font-family:"Montserrat";font-size:1.05rem;color:#1a2530}
+.pdf-logo small{display:block;font-size:.66rem;color:#3a2f10;line-height:1.35;max-width:230px;margin-top:2px}
+
+/* ---------- Modal + popover (interactive layer) ---------- */
+.overlay{position:fixed;inset:0;background:rgba(8,22,36,.55);z-index:90;display:flex;align-items:center;justify-content:center;
+  padding:20px;opacity:0;animation:fade .18s forwards}
+@keyframes fade{to{opacity:1}}
+.modal{background:#fff;border-radius:16px;max-width:540px;width:100%;box-shadow:var(--shadow-lg);overflow:hidden;
+  transform:translateY(8px);animation:rise .22s forwards}
+@keyframes rise{to{transform:translateY(0)}}
+.modal .mhead{background:var(--navy);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.modal .mhead h3{color:#fff;margin:0;font-size:1.1rem}
+.modal .mbody{padding:20px;font-size:.95rem;line-height:1.6;color:var(--ink)}
+.modal .mbody p{margin:0 0 12px}
+.modal .mbody .hl{background:#fff3d6;border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px;margin:12px 0}
+.modal .x{background:rgba(255,255,255,.16);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1.1rem;flex:none}
+.modal .x:hover{background:rgba(255,255,255,.3)}
+.pop{position:absolute;z-index:95;background:#10212f;color:#eef4f9;border-radius:12px;padding:14px 16px;max-width:300px;
+  box-shadow:var(--shadow-lg);font-size:.86rem;line-height:1.5;animation:fade .14s forwards}
+.pop h4{color:#fff;margin:0 0 8px;font-size:.98rem}
+.pop .prow{display:flex;justify-content:space-between;gap:14px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+.pop .prow span{color:#9fb6c9} .pop .prow b{font-family:"Montserrat"}
+.pop .says{margin-top:9px;color:#dbe7f2;font-size:.83rem}
+.pop .arw{position:absolute;width:12px;height:12px;background:#10212f;transform:rotate(45deg)}
+.pop.estimate-note{font-size:.74rem;color:#9fb6c9;margin-top:8px}
+
+@media(max-width:900px){
+  .pdf-cols{grid-template-columns:1fr}
+  .pdf-left,.pdf-center{border-right:none;border-bottom:1px solid var(--line)}
+  .pdf-banner{flex-direction:column;align-items:flex-start;background:var(--navy)}
+  .pdf-banner p{max-width:100%}
+  .pdf-gaps{grid-template-columns:1fr}
+}
+
+/* ---------- Worst vs Best callout ---------- */
+.worstbest{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.wb{display:flex;align-items:center;gap:14px;border-radius:12px;padding:14px 18px;color:#fff}
+.wb.worst{background:linear-gradient(135deg,#a5311f,#c0392b)}
+.wb.best{background:linear-gradient(135deg,#176a3c,#1e8449)}
+.wb .ic{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:1.3rem;flex:none}
+.wb .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;opacity:.9;font-weight:700}
+.wb .st{font-family:"Montserrat";font-weight:800;font-size:1.15rem;line-height:1.1}
+.wb .det{font-size:.82rem;opacity:.95;margin-top:2px}
+
+/* ---------- Compare states ---------- */
+.compare-pick{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px}
+.cmp-field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:170px}
+.cmp-field span{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.cmp-field select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:.92rem;background:#fff}
+.cmp-field select:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+.compare-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.ccard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.ccard .chd{padding:12px 14px;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ccard .chd .cn{font-family:"Montserrat";font-weight:800;font-size:1.02rem}
+.ccard .chd .cc{font-family:"Montserrat";font-weight:800;font-size:1.25rem}
+.ccard .crow{display:flex;justify-content:space-between;padding:9px 14px;font-size:.88rem;border-top:1px solid var(--line)}
+.ccard .crow span{color:var(--muted)} .ccard .crow b{font-family:"Montserrat"}
+.ccard .cbadge{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.22)}
+.cmp-best{box-shadow:0 0 0 2px var(--green)} .cmp-worst{box-shadow:0 0 0 2px var(--red)}
+
+/* ---------- Calculator: copy button + trend chart ---------- */
+.copybtn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);color:#fff;font-family:"Montserrat";
+  font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.copybtn:hover{background:rgba(255,255,255,.28)} .copybtn:focus{outline:2px solid var(--gold)}
+.copybtn.done{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.verdict .vic{margin-right:5px}
+.trendbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:14px;box-shadow:var(--shadow)}
+.trendbox h4{font-family:"Montserrat";font-size:.9rem;color:var(--navy);margin:0 0 2px;display:flex;align-items:center;gap:6px}
+.trendbox .sub{font-size:.74rem;color:var(--muted);margin-bottom:8px}
+.trendbox svg{width:100%;height:auto;display:block}
+.trendbox .anchor{font-size:.72rem;fill:var(--muted)}
+.trendbox .aval{font-family:"Montserrat";font-weight:700;font-size:.76rem;fill:var(--navy)}
+
+/* ---------- Footer enhancements ---------- */
+.foot-links{display:flex;flex-direction:column;gap:6px;font-size:.86rem;text-align:right}
+.citation{border-top:1px solid rgba(255,255,255,.15);border-bottom:1px solid rgba(255,255,255,.15);padding:14px 0;font-size:.8rem;color:#cfe0ee}
+.citation .ctitle{font-family:"Montserrat";font-weight:700;color:#fff;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.citation p{margin:0;line-height:1.5}
+.foot-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:.78rem;color:#9fb6c9}
+
+/* ---------- Accessibility: visible focus for keyboard users ---------- */
+#map path.state:focus{outline:none;stroke:var(--navy);stroke-width:2.2}
+#map path.state:focus-visible{stroke:#06283d;stroke-width:2.6}
+.segbtn button:focus-visible,.copybtn:focus-visible,.sil:focus-visible,#bars rect.b:focus{outline:2px solid var(--gold);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+@media(max-width:760px){
+  .worstbest{grid-template-columns:1fr}
+}
+
+/* ---------- Print (Download as PDF) ---------- */
+@media print{
+@page{margin:0.4in}
+  #nav,#dashboard,#calculator,footer,#notice,.btn,.divider,.overlay,.pop,.clickhint,.ytag,.clickdot,.pdf-mapnote{display:none !important}
+  body{background:#fff}
+  section{padding:0}
+  #infographic{background:#fff;padding:0}
+  .pdf-slide{box-shadow:none;border:none;border-radius:0;max-width:100%}
+  .pdf-cols{grid-template-columns:1.05fr 1.18fr 1.05fr}
+  .card,.tvn,.sil,.modal{box-shadow:none;break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav id="nav">
+  <div class="wrap">
+    <a class="brand" href="#infographic"><span class="mark">B</span><span>UMass Boston &middot; Elder Index</span></a>
+    <div class="links">
+      <a href="#infographic" data-sec="infographic">Infographic</a>
+      <a href="#dashboard" data-sec="dashboard">Dashboard</a>
+      <a href="#calculator" data-sec="calculator">Calculator</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ SECTION 1: INFOGRAPHIC (PDF-faithful + interactive) ============ -->
+<section id="infographic">
+  <div class="pdf-slide">
+
+    <!-- Title bar -->
+    <div class="pdf-title">
+      <h1>How Far Does Social Security Go?<span>Comparing Benefits to Elder Index 2025</span></h1>
+      <button class="btn" onclick="window.print()">&#128424;&nbsp; Download as PDF</button>
+    </div>
+
+    <!-- 3-column body -->
+    <div class="pdf-cols">
+
+      <!-- LEFT: key bullets + state silhouette cards + US average -->
+      <div class="pdf-left">
+        <ul class="bullets small">
+          <li>Average Social Security benefits cover only <b><span data-count="70" data-suffix="%">0</span></b> of necessary living expenses for single older renters nationwide, while benefits cover about <b>78%</b> for older couple renters.</li>
+          <li>Homeowners without a mortgage have the most coverage by SSB (<b>91%</b>).</li>
+        </ul>
+
+        <h4>Four states where Social Security covers the <span class="least">LEAST</span> for single older renters</h4>
+        <div class="silcards" id="least-cards"></div>
+
+        <h4>Four states where Social Security covers the <span class="most">MOST</span> for single older renters</h4>
+        <div class="silcards" id="most-cards"></div>
+
+        <div class="usavg">
+          <div class="ussil" id="ussil"></div>
+          <div class="arrow">&#10142;</div>
+          <div class="avgtag" id="usavg-tag" tabindex="0" role="button" aria-label="What does 70% mean?">
+            U.S. AVG = <span data-count="70" data-suffix="%">0</span>
+            <span class="info-dot">i</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER: choropleth + legend + regional bullets -->
+      <div class="pdf-center">
+        <div class="pdf-map-wrap">
+          <div id="pdf-map"></div>
+          <div class="pdf-legend">
+            <div class="lt">Percentage of EI covered by SSB</div>
+            <div class="lrow"><span class="sw low"></span> Low: 40.87% – 79.86%</div>
+            <div class="lrow"><span class="sw mid"></span> Middle: 77.87% – 88.67%</div>
+            <div class="lrow"><span class="sw high"></span> High: 88.68% – 101.22%</div>
+          </div>
+          <div class="pdf-mapnote">Interactive map shows state-level coverage for single older renters; the published slide mapped counties.</div>
+        </div>
+        <ul class="bullets small" style="margin-top:14px">
+          <li>Counties in California, the Northeast, and parts of Florida continue to show lower relative coverage even for couples.</li>
+          <li>Counties with the lowest coverage are concentrated in California, the Northeast, high-cost metro regions, and parts of the Mountain West.</li>
+          <li>Regional disparities are <b>more</b> pronounced for single older renters than for older couples.</li>
+        </ul>
+      </div>
+
+      <!-- RIGHT: comparison table + Then vs Now -->
+      <div class="pdf-right">
+        <div class="cmp-head">Coverage of U.S. Elder Index by average Social Security benefits, 2015 and 2025</div>
+        <div class="cmp-wrap">
+          <table class="cmp">
+            <thead><tr><th></th><th>Single<br>living alone</th><th>Couples<br>living together</th></tr></thead>
+            <tbody>
+              <tr class="yr" data-year="2025"><td colspan="3">2025 <span class="ytag">click to explain &#9432;</span></td></tr>
+              <tr data-y="2025"><td class="k">Elder Index</td><td>$34,032</td><td>$47,016</td></tr>
+              <tr data-y="2025"><td class="k">Average SSB</td><td>$23,704</td><td>$36,703</td></tr>
+              <tr data-y="2025"><td class="k">% of Index covered</td><td>69.7%</td><td>78.1%</td></tr>
+              <tr data-y="2025"><td class="k">Amount uncovered</td><td>$10,328</td><td>$10,313</td></tr>
+              <tr class="yr" data-year="2015"><td colspan="3">2015 <span class="ytag">click to explain &#9432;</span></td></tr>
+              <tr data-y="2015"><td class="k">Elder Index</td><td>$23,088</td><td>$33,504</td></tr>
+              <tr data-y="2015"><td class="k">Average SSB</td><td>$15,943</td><td>$26,009</td></tr>
+              <tr data-y="2015"><td class="k">% of Index covered</td><td>69.1%</td><td>77.6%</td></tr>
+              <tr data-y="2015"><td class="k">Amount uncovered</td><td>$7,145</td><td>$7,495</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tvn" id="tvn" tabindex="0" role="button" aria-label="Why has the gap barely changed?">
+          <h3>Then vs. Now: 2015 &rarr; 2025</h3>
+          <div class="row"><span style="flex:1">Covered</span><span class="old">69.1%</span><span class="arrow">&rarr;</span><span class="new">69.7%</span></div>
+          <div class="row"><span style="flex:1">Uncovered</span><span class="old">$7,145</span><span class="arrow">&rarr;</span><span class="new">$10,328</span></div>
+          <span class="clickhint">Click to learn why the gap barely moved &#8250;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gap-bar strip (interactive) -->
+    <div class="pdf-gaps">
+      <div>
+        <h4>Single older renter
+          <span class="info" tabindex="0">i<span class="tip">Share of the national Elder Index ($34,032/yr) covered by the average benefit ($23,704/yr). Click the bar to see what the gap buys.</span></span>
+        </h4>
+        <div class="gapbar clickable" data-cov="69.7" data-gap="10328" data-ei="34032" data-who="single older renter">
+          <div class="track">
+            <div class="seg cov" style="width:0">Covered 69.7%</div>
+            <div class="seg unc" style="width:0">Gap</div>
+          </div>
+          <div class="capt"><span>$23,704 Social Security</span><span style="color:var(--red)">$10,328 uncovered &middot; click bar &#9432;</span></div>
+        </div>
+      </div>
+      <div>
+        <h4>Older couple renters
+          <span class="info" tabindex="0">i<span class="tip">Share of the national couple Elder Index ($47,016/yr) covered by the average couple benefit ($36,703/yr). Click the bar to see what the gap buys.</span></span>
+        </h4>
+        <div class="gapbar clickable" data-cov="78.1" data-gap="10313" data-ei="47016" data-who="older couple who rent">
+          <div class="track">
+            <div class="seg cov" style="width:0">Covered 78.1%</div>
+            <div class="seg unc" style="width:0">Gap</div>
+          </div>
+          <div class="capt"><span>$36,703 Social Security</span><span style="color:var(--red)">$10,313 uncovered &middot; click bar &#9432;</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full-width bottom banner -->
+    <div class="pdf-banner">
+      <p>Social Security remains the foundation of retirement income, but for millions of older adults it does not fully cover the cost of basic necessities such as housing, health care, food, and transportation.</p>
+      <div class="pdf-logo">
+        <div class="b">B</div>
+        <div>
+          <strong>UMass Boston</strong>
+          <small>Learn more about the Elder Index: elderindex.org<br>Gerontology Institute, Manning College of Nursing &amp; Health Sciences<br>csdra@umb.edu</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============ SECTION 2: DASHBOARD ============ -->
+<section id="dashboard">
+  <div class="wrap">
+    <span class="section-tag">National Dashboard</span>
+    <h2>Coverage across all 50 states + DC</h2>
+    <p class="lead">Explore how far the average Social Security benefit goes against the Elder Index in every state. Switch household and housing type to see how the picture changes.</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label id="lbl-hh">Household</label>
+        <div class="segbtn" id="ctl-household" role="group" aria-labelledby="lbl-hh">
+          <button data-v="single" class="on" aria-pressed="true">Single</button>
+          <button data-v="couple" aria-pressed="false">Couple</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label id="lbl-ho">Housing status</label>
+        <div class="segbtn" id="ctl-housing" role="group" aria-labelledby="lbl-ho">
+          <button data-v="renter" class="on" aria-pressed="true">Renter</button>
+          <button data-v="owner_mortgage" aria-pressed="false">Owner, mortgage</button>
+          <button data-v="owner_free" aria-pressed="false">Owner, no mortgage</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label id="lbl-he">Health</label>
+        <div class="segbtn" id="ctl-health" role="group" aria-labelledby="lbl-he">
+          <button data-v="excellent" aria-pressed="false">Excellent</button>
+          <button data-v="good" class="on" aria-pressed="true">Good</button>
+          <button data-v="poor" aria-pressed="false">Poor</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary" id="summary"></div>
+
+    <!-- Worst vs Best persistent callout (scannable context, updates with filters) -->
+    <div class="worstbest" id="worstbest" aria-live="polite"></div>
+
+    <div class="dash-grid">
+      <div>
+        <div id="map-wrap" class="card" style="padding:14px">
+          <div id="map" role="img" aria-label="Choropleth map of U.S. states colored by share of the Elder Index covered by Social Security. Use the ranked list to the right to tab through every state with its exact value."></div>
+          <div class="maploading" id="maploading"><div><div class="spinner"></div>Loading U.S. map&hellip;</div></div>
+        </div>
+        <div class="legend">
+          <span>Lower coverage</span>
+          <span class="bar"></span>
+          <span>Higher coverage</span>
+          <span class="info" tabindex="0" style="background:var(--muted)">i<span class="tip">Color = % of the Elder Index covered by the average Social Security benefit for the selected household and housing type. Exact values are labelled in the ranked list, so color is never the only cue. Click or press Enter on any state to pin its details.</span></span>
+        </div>
+      </div>
+      <div>
+        <div class="panel" id="panel">
+          <div class="pname">Hover, tap, or tab to a state</div>
+          <p style="color:var(--muted);font-size:.9rem;margin:8px 0 0">Select any state on the map or a bar below to see its Elder Index, average Social Security benefit, coverage, and annual gap.</p>
+        </div>
+        <div class="card" style="margin-top:16px;padding:14px">
+          <h3 style="font-size:1rem;margin-bottom:4px">States ranked by coverage <span class="info" tabindex="0">i<span class="tip">All 51 jurisdictions ranked low to high for the current filter. Dotted line = the average across states. Click a bar to highlight that state on the map.</span></span></h3>
+          <div id="bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compare States tool -->
+    <div class="card compare" style="margin-top:22px">
+      <h3 style="font-size:1.1rem">Compare states
+        <span class="info" tabindex="0">i<span class="tip">Pick two or three states to see them side by side under the current household, housing, and health filters. Useful for making the case for a specific state.</span></span>
+      </h3>
+      <p style="color:var(--muted);font-size:.86rem;margin:2px 0 12px">Reflects the filters above (<span id="cmp-filters"></span>).</p>
+      <div class="compare-pick">
+        <label class="cmp-field"><span>State A</span><select id="cmp-a" aria-label="Compare state A"></select></label>
+        <label class="cmp-field"><span>State B</span><select id="cmp-b" aria-label="Compare state B"></select></label>
+        <label class="cmp-field"><span>State C (optional)</span><select id="cmp-c" aria-label="Compare state C, optional"></select></label>
+      </div>
+      <div class="compare-cards" id="compare-cards"></div>
+    </div>
+
+    <div class="method" id="dash-method"></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============ SECTION 3: CALCULATOR ============ -->
+<section id="calculator">
+  <div class="wrap">
+    <span class="section-tag">Personal Gap Calculator</span>
+    <h2>What does it look like for you?</h2>
+    <p class="lead">Enter a situation to see the Elder Index, estimated income, and the annual gap or surplus &mdash; updated in real time.</p>
+
+    <div class="calc-grid" style="margin-top:18px">
+      <div class="card form">
+        <div class="field">
+          <label class="fl" for="c-state">State</label>
+          <select id="c-state"></select>
+        </div>
+        <div class="field">
+          <label class="fl">Household</label>
+          <div class="segbtn" id="c-household" style="width:100%">
+            <button data-v="single" class="on" style="flex:1">Single</button>
+            <button data-v="couple" style="flex:1">Couple</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="fl">Housing status</label>
+          <div class="segbtn" id="c-housing" style="width:100%;flex-wrap:wrap">
+            <button data-v="renter" class="on" style="flex:1">Renter</button>
+            <button data-v="owner_mortgage" style="flex:1">Owner, mortgage</button>
+            <button data-v="owner_free" style="flex:1">Owner, no mortgage</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="fl">Health status <span class="info" tabindex="0">i<span class="tip">Health changes the health-care portion of the Elder Index. Poorer health means higher out-of-pocket costs and a larger index.</span></span></label>
+          <div class="segbtn" id="c-health" style="width:100%">
+            <button data-v="excellent" style="flex:1">Excellent</button>
+            <button data-v="good" class="on" style="flex:1">Good</button>
+            <button data-v="poor" style="flex:1">Poor</button>
+          </div>
+        </div>
+        <div class="two">
+          <div class="field">
+            <label class="fl" for="c-ssb">Monthly Social Security</label>
+            <input id="c-ssb" type="number" min="0" step="10" placeholder="state average" />
+            <div class="hint">Leave blank to use the state average.</div>
+          </div>
+          <div class="field">
+            <label class="fl" for="c-extra">Other monthly income</label>
+            <input id="c-extra" type="number" min="0" step="10" placeholder="0" />
+            <div class="hint">Pension, part-time work, etc.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="out" id="c-out"></div>
+        <div class="trendbox" id="c-trend"></div>
+        <div class="context" id="c-context"></div>
+        <div class="method" id="calc-method"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap" style="flex-direction:column;align-items:stretch;gap:20px">
+    <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:flex-start">
+      <div class="mark">
+        <div class="b">B</div>
+        <div>
+          <strong style="color:#fff;font-family:Montserrat">UMass Boston</strong>
+          <small>Gerontology Institute, Manning College of Nursing &amp; Health Sciences</small>
+        </div>
+      </div>
+      <nav class="foot-links" aria-label="Sources and downloads">
+        <a href="https://elderindex.org" target="_blank" rel="noopener">Elder Index &rarr; elderindex.org</a>
+        <a href="https://www.ssa.gov/policy/docs/statcomps/oasdi_sc/" target="_blank" rel="noopener">SSA OASDI Beneficiaries by State &amp; County &rarr;</a>
+        <a href="EI%20SSB%20Infographic%206.1.pdf" target="_blank" rel="noopener">Download the original infographic (PDF) &rarr;</a>
+        <a href="mailto:csdra@umb.edu">csdra@umb.edu</a>
+      </nav>
+    </div>
+
+    <div class="citation">
+      <div class="ctitle">Recommended citation</div>
+      <p>Elder Index. (2025). <i>The Elder Index&trade;</i> [Public Dataset]. Boston, MA: Gerontology Institute, University of Massachusetts Boston. Retrieved from ElderIndex.org</p>
+      <p style="margin-top:6px">Social Security benefit data: Social Security Administration. (2024). <i>OASDI Beneficiaries by State and County, 2023</i> (SSA Publication No. 13-11954).</p>
+    </div>
+
+    <div class="foot-meta">
+      <span>Last updated <b>June 2026</b> &middot; Elder Index 2025 &middot; SSA benefit data December 2023.</span>
+      <span>Built to extend the work of the UMass Boston Gerontology Institute.</span>
+    </div>
+  </div>
+</footer>
+
+<div id="notice"></div>
+
+<script>
+/* ============================================================
+   DATA — baked at build time. The app does ZERO runtime fetching
+   for benefit / index figures; only the US map geometry loads from a CDN.
+   Each value carries a source tag (see comments below).
+   ============================================================ */
+// ====== VERIFIED DATA (baked at build time; zero runtime fetching) ======
+// SSA: avg annual benefit for retired workers, Dec 2023. Source: SSA OASDI Beneficiaries
+//      by State and County, 2023 (Pub. 13-11954). avg_monthly*12; computed amount/number.
+// EI : Elder Index 2025 (UMass Boston Gerontology Institute), elderindex.org/explore.
+//      annual = monthly total * 12, per household/housing/health combination.
+const SSA_ANNUAL = {"AL":22269,"AK":22050,"AZ":23390,"AR":21477,"CA":22390,"CO":23494,"CT":25363,"DE":25075,"FL":22724,"GA":22307,"HI":22901,"ID":22563,"IL":23209,"IN":23588,"IA":23056,"KS":23784,"KY":21635,"LA":21110,"ME":21788,"MD":24653,"MA":24031,"MI":23967,"MN":24187,"MS":21070,"MO":22432,"MT":21808,"NE":23247,"NV":22110,"NH":25133,"NJ":25325,"NM":21591,"NY":23416,"NC":22912,"ND":22272,"OH":22293,"OK":22276,"OR":23012,"PA":23743,"RI":23659,"SC":23114,"SD":22180,"TN":22675,"TX":22385,"UT":23859,"VT":23531,"VA":23818,"WA":24262,"WV":22066,"WI":23485,"WY":23406,"DC":23002};
+
+const EI_DATA = {"AL":{"single":{"renter":{"poor":29640,"good":27492,"excellent":26424},"owner_free":{"poor":24408,"good":22260,"excellent":21192},"owner_mortgage":{"poor":34428,"good":32280,"excellent":31212}},"couple":{"renter":{"poor":44472,"good":40176,"excellent":38040},"owner_free":{"poor":39240,"good":34944,"excellent":32808},"owner_mortgage":{"poor":49260,"good":44964,"excellent":42828}}},"AK":{"single":{"renter":{"poor":35340,"good":33252,"excellent":32328},"owner_free":{"poor":29244,"good":27156,"excellent":26232},"owner_mortgage":{"poor":44688,"good":42600,"excellent":41676}},"couple":{"renter":{"poor":52560,"good":48384,"excellent":46536},"owner_free":{"poor":46464,"good":42288,"excellent":40440},"owner_mortgage":{"poor":61908,"good":57732,"excellent":55884}}},"AZ":{"single":{"renter":{"poor":36480,"good":34236,"excellent":33216},"owner_free":{"poor":25356,"good":23112,"excellent":22092},"owner_mortgage":{"poor":37680,"good":35436,"excellent":34416}},"couple":{"renter":{"poor":51420,"good":46932,"excellent":44892},"owner_free":{"poor":40296,"good":35808,"excellent":33768},"owner_mortgage":{"poor":52620,"good":48132,"excellent":46092}}},"AR":{"single":{"renter":{"poor":29772,"good":27396,"excellent":26172},"owner_free":{"poor":25704,"good":23328,"excellent":22104},"owner_mortgage":{"poor":34716,"good":32340,"excellent":31116}},"couple":{"renter":{"poor":45888,"good":41136,"excellent":38688},"owner_free":{"poor":41820,"good":37068,"excellent":34620},"owner_mortgage":{"poor":50832,"good":46080,"excellent":43632}}},"CA":{"single":{"renter":{"poor":43224,"good":41532,"excellent":40692},"owner_free":{"poor":28116,"good":26424,"excellent":25584},"owner_mortgage":{"poor":49824,"good":48132,"excellent":47292}},"couple":{"renter":{"poor":57168,"good":53784,"excellent":52104},"owner_free":{"poor":42060,"good":38676,"excellent":36996},"owner_mortgage":{"poor":63768,"good":60384,"excellent":58704}}},"CO":{"single":{"renter":{"poor":38400,"good":36216,"excellent":35052},"owner_free":{"poor":28104,"good":25920,"excellent":24756},"owner_mortgage":{"poor":43176,"good":40992,"excellent":39828}},"couple":{"renter":{"poor":54252,"good":49884,"excellent":47556},"owner_free":{"poor":43956,"good":39588,"excellent":37260},"owner_mortgage":{"poor":59028,"good":54660,"excellent":52332}}},"CT":{"single":{"renter":{"poor":39360,"good":36900,"excellent":35640},"owner_free":{"poor":34932,"good":32472,"excellent":31212},"owner_mortgage":{"poor":48960,"good":46500,"excellent":45240}},"couple":{"renter":{"poor":55260,"good":50340,"excellent":47820},"owner_free":{"poor":50832,"good":45912,"excellent":43392},"owner_mortgage":{"poor":64860,"good":59940,"excellent":57420}}},"DE":{"single":{"renter":{"poor":35868,"good":33084,"excellent":32412},"owner_free":{"poor":27060,"good":24276,"excellent":23604},"owner_mortgage":{"poor":41052,"good":38268,"excellent":37596}},"couple":{"renter":{"poor":52020,"good":46452,"excellent":45108},"owner_free":{"poor":43212,"good":37644,"excellent":36300},"owner_mortgage":{"poor":57204,"good":51636,"excellent":50292}}},"FL":{"single":{"renter":{"poor":37188,"good":35040,"excellent":34080},"owner_free":{"poor":26604,"good":24456,"excellent":23496},"owner_mortgage":{"poor":39444,"good":37296,"excellent":36336}},"couple":{"renter":{"poor":51288,"good":46992,"excellent":45072},"owner_free":{"poor":40704,"good":36408,"excellent":34488},"owner_mortgage":{"poor":53544,"good":49248,"excellent":47328}}},"GA":{"single":{"renter":{"poor":35052,"good":32700,"excellent":31488},"owner_free":{"poor":25776,"good":23424,"excellent":22212},"owner_mortgage":{"poor":37476,"good":35124,"excellent":33912}},"couple":{"renter":{"poor":50208,"good":45504,"excellent":43080},"owner_free":{"poor":40932,"good":36228,"excellent":33804},"owner_mortgage":{"poor":52632,"good":47928,"excellent":45504}}},"HI":{"single":{"renter":{"poor":43200,"good":41232,"excellent":40152},"owner_free":{"poor":28332,"good":26364,"excellent":25284},"owner_mortgage":{"poor":52044,"good":50076,"excellent":48996}},"couple":{"renter":{"poor":58956,"good":55020,"excellent":52860},"owner_free":{"poor":44088,"good":40152,"excellent":37992},"owner_mortgage":{"poor":67800,"good":63864,"excellent":61704}}},"ID":{"single":{"renter":{"poor":34488,"good":32196,"excellent":31032},"owner_free":{"poor":26244,"good":23952,"excellent":22788},"owner_mortgage":{"poor":37884,"good":35592,"excellent":34428}},"couple":{"renter":{"poor":50724,"good":46140,"excellent":43812},"owner_free":{"poor":42480,"good":37896,"excellent":35568},"owner_mortgage":{"poor":54120,"good":49536,"excellent":47208}}},"IL":{"single":{"renter":{"poor":35472,"good":33312,"excellent":32208},"owner_free":{"poor":29796,"good":27636,"excellent":26532},"owner_mortgage":{"poor":41124,"good":38964,"excellent":37860}},"couple":{"renter":{"poor":50604,"good":46284,"excellent":44076},"owner_free":{"poor":44928,"good":40608,"excellent":38400},"owner_mortgage":{"poor":56256,"good":51936,"excellent":49728}}},"IN":{"single":{"renter":{"poor":30720,"good":28464,"excellent":27372},"owner_free":{"poor":25728,"good":23472,"excellent":22380},"owner_mortgage":{"poor":34272,"good":32016,"excellent":30924}},"couple":{"renter":{"poor":46056,"good":41544,"excellent":39360},"owner_free":{"poor":41064,"good":36552,"excellent":34368},"owner_mortgage":{"poor":49608,"good":45096,"excellent":42912}}},"IA":{"single":{"renter":{"poor":30660,"good":28392,"excellent":27216},"owner_free":{"poor":28212,"good":25944,"excellent":24768},"owner_mortgage":{"poor":37656,"good":35388,"excellent":34212}},"couple":{"renter":{"poor":47016,"good":42480,"excellent":40128},"owner_free":{"poor":44568,"good":40032,"excellent":37680},"owner_mortgage":{"poor":54012,"good":49476,"excellent":47124}}},"KS":{"single":{"renter":{"poor":31128,"good":29064,"excellent":28056},"owner_free":{"poor":28512,"good":26448,"excellent":25440},"owner_mortgage":{"poor":38544,"good":36480,"excellent":35472}},"couple":{"renter":{"poor":47148,"good":43020,"excellent":41004},"owner_free":{"poor":44532,"good":40404,"excellent":38388},"owner_mortgage":{"poor":54564,"good":50436,"excellent":48420}}},"KY":{"single":{"renter":{"poor":30516,"good":28200,"excellent":27024},"owner_free":{"poor":25872,"good":23556,"excellent":22380},"owner_mortgage":{"poor":35052,"good":32736,"excellent":31560}},"couple":{"renter":{"poor":46188,"good":41556,"excellent":39204},"owner_free":{"poor":41544,"good":36912,"excellent":34560},"owner_mortgage":{"poor":50724,"good":46092,"excellent":43740}}},"LA":{"single":{"renter":{"poor":31092,"good":28860,"excellent":27768},"owner_free":{"poor":24840,"good":22608,"excellent":21516},"owner_mortgage":{"poor":36240,"good":34008,"excellent":32916}},"couple":{"renter":{"poor":46200,"good":41736,"excellent":39552},"owner_free":{"poor":39948,"good":35484,"excellent":33300},"owner_mortgage":{"poor":51348,"good":46884,"excellent":44700}}},"ME":{"single":{"renter":{"poor":34260,"good":31956,"excellent":30768},"owner_free":{"poor":28452,"good":26148,"excellent":24960},"owner_mortgage":{"poor":38676,"good":36372,"excellent":35184}},"couple":{"renter":{"poor":49992,"good":45384,"excellent":43008},"owner_free":{"poor":44184,"good":39576,"excellent":37200},"owner_mortgage":{"poor":54408,"good":49800,"excellent":47424}}},"MD":{"single":{"renter":{"poor":41316,"good":39360,"excellent":38388},"owner_free":{"poor":30084,"good":28128,"excellent":27156},"owner_mortgage":{"poor":45948,"good":43992,"excellent":43020}},"couple":{"renter":{"poor":57360,"good":53448,"excellent":51504},"owner_free":{"poor":46128,"good":42216,"excellent":40272},"owner_mortgage":{"poor":61992,"good":58080,"excellent":56136}}},"MA":{"single":{"renter":{"poor":44220,"good":42324,"excellent":41388},"owner_free":{"poor":33852,"good":31956,"excellent":31020},"owner_mortgage":{"poor":50112,"good":48216,"excellent":47280}},"couple":{"renter":{"poor":60084,"good":56292,"excellent":54420},"owner_free":{"poor":49716,"good":45924,"excellent":44052},"owner_mortgage":{"poor":65976,"good":62184,"excellent":60312}}},"MI":{"single":{"renter":{"poor":31848,"good":29700,"excellent":28704},"owner_free":{"poor":27336,"good":25188,"excellent":24192},"owner_mortgage":{"poor":37068,"good":34920,"excellent":33924}},"couple":{"renter":{"poor":47340,"good":43044,"excellent":41052},"owner_free":{"poor":42828,"good":38532,"excellent":36540},"owner_mortgage":{"poor":52560,"good":48264,"excellent":46272}}},"MN":{"single":{"renter":{"poor":34056,"good":32004,"excellent":31032},"owner_free":{"poor":28776,"good":26724,"excellent":25752},"owner_mortgage":{"poor":40356,"good":38304,"excellent":37332}},"couple":{"renter":{"poor":49848,"good":45744,"excellent":43800},"owner_free":{"poor":44568,"good":40464,"excellent":38520},"owner_mortgage":{"poor":56148,"good":52044,"excellent":50100}}},"MS":{"single":{"renter":{"poor":30672,"good":28524,"excellent":27504},"owner_free":{"poor":25092,"good":22944,"excellent":21924},"owner_mortgage":{"poor":34848,"good":32700,"excellent":31680}},"couple":{"renter":{"poor":46368,"good":42072,"excellent":40032},"owner_free":{"poor":40788,"good":36492,"excellent":34452},"owner_mortgage":{"poor":50544,"good":46248,"excellent":44208}}},"MO":{"single":{"renter":{"poor":30048,"good":28044,"excellent":26952},"owner_free":{"poor":26076,"good":24072,"excellent":22980},"owner_mortgage":{"poor":35652,"good":33648,"excellent":32556}},"couple":{"renter":{"poor":44976,"good":40968,"excellent":38784},"owner_free":{"poor":41004,"good":36996,"excellent":34812},"owner_mortgage":{"poor":50580,"good":46572,"excellent":44388}}},"MT":{"single":{"renter":{"poor":34752,"good":32544,"excellent":31500},"owner_free":{"poor":27768,"good":25560,"excellent":24516},"owner_mortgage":{"poor":39948,"good":37740,"excellent":36696}},"couple":{"renter":{"poor":51300,"good":46884,"excellent":44796},"owner_free":{"poor":44316,"good":39900,"excellent":37812},"owner_mortgage":{"poor":56496,"good":52080,"excellent":49992}}},"NE":{"single":{"renter":{"poor":31464,"good":29292,"excellent":28248},"owner_free":{"poor":28956,"good":26784,"excellent":25740},"owner_mortgage":{"poor":39312,"good":37140,"excellent":36096}},"couple":{"renter":{"poor":47736,"good":43392,"excellent":41304},"owner_free":{"poor":45228,"good":40884,"excellent":38796},"owner_mortgage":{"poor":55584,"good":51240,"excellent":49152}}},"NV":{"single":{"renter":{"poor":34944,"good":33000,"excellent":32160},"owner_free":{"poor":24780,"good":22836,"excellent":21996},"owner_mortgage":{"poor":38700,"good":36756,"excellent":35916}},"couple":{"renter":{"poor":48948,"good":45060,"excellent":43380},"owner_free":{"poor":38784,"good":34896,"excellent":33216},"owner_mortgage":{"poor":52704,"good":48816,"excellent":47136}}},"NH":{"single":{"renter":{"poor":38340,"good":36396,"excellent":35532},"owner_free":{"poor":33972,"good":32028,"excellent":31164},"owner_mortgage":{"poor":46440,"good":44496,"excellent":43632}},"couple":{"renter":{"poor":54696,"good":50808,"excellent":49080},"owner_free":{"poor":50328,"good":46440,"excellent":44712},"owner_mortgage":{"poor":62796,"good":58908,"excellent":57180}}},"NJ":{"single":{"renter":{"poor":41172,"good":38736,"excellent":37464},"owner_free":{"poor":35916,"good":33480,"excellent":32208},"owner_mortgage":{"poor":51624,"good":49188,"excellent":47916}},"couple":{"renter":{"poor":56520,"good":51648,"excellent":49104},"owner_free":{"poor":51264,"good":46392,"excellent":43848},"owner_mortgage":{"poor":66972,"good":62100,"excellent":59556}}},"NM":{"single":{"renter":{"poor":32100,"good":29796,"excellent":28644},"owner_free":{"poor":25860,"good":23556,"excellent":22404},"owner_mortgage":{"poor":37512,"good":35208,"excellent":34056}},"couple":{"renter":{"poor":48048,"good":43440,"excellent":41136},"owner_free":{"poor":41808,"good":37200,"excellent":34896},"owner_mortgage":{"poor":53460,"good":48852,"excellent":46548}}},"NY":{"single":{"renter":{"poor":44124,"good":41676,"excellent":40344},"owner_free":{"poor":33852,"good":31404,"excellent":30072},"owner_mortgage":{"poor":52152,"good":49704,"excellent":48372}},"couple":{"renter":{"poor":59928,"good":55032,"excellent":52368},"owner_free":{"poor":49656,"good":44760,"excellent":42096},"owner_mortgage":{"poor":67956,"good":63060,"excellent":60396}}},"NC":{"single":{"renter":{"poor":33360,"good":31092,"excellent":29964},"owner_free":{"poor":25548,"good":23280,"excellent":22152},"owner_mortgage":{"poor":36444,"good":34176,"excellent":33048}},"couple":{"renter":{"poor":48588,"good":44052,"excellent":41796},"owner_free":{"poor":40776,"good":36240,"excellent":33984},"owner_mortgage":{"poor":51672,"good":47136,"excellent":44880}}},"ND":{"single":{"renter":{"poor":31512,"good":29292,"excellent":28248},"owner_free":{"poor":28512,"good":26292,"excellent":25248},"owner_mortgage":{"poor":40332,"good":38112,"excellent":37068}},"couple":{"renter":{"poor":48552,"good":44112,"excellent":42024},"owner_free":{"poor":45552,"good":41112,"excellent":39024},"owner_mortgage":{"poor":57372,"good":52932,"excellent":50844}}},"OH":{"single":{"renter":{"poor":30336,"good":28200,"excellent":27072},"owner_free":{"poor":26604,"good":24468,"excellent":23340},"owner_mortgage":{"poor":35688,"good":33552,"excellent":32424}},"couple":{"renter":{"poor":45420,"good":41148,"excellent":38892},"owner_free":{"poor":41688,"good":37416,"excellent":35160},"owner_mortgage":{"poor":50772,"good":46500,"excellent":44244}}},"OK":{"single":{"renter":{"poor":30324,"good":28164,"excellent":27060},"owner_free":{"poor":26508,"good":24348,"excellent":23244},"owner_mortgage":{"poor":36396,"good":34236,"excellent":33132}},"couple":{"renter":{"poor":46008,"good":41688,"excellent":39480},"owner_free":{"poor":42192,"good":37872,"excellent":35664},"owner_mortgage":{"poor":52080,"good":47760,"excellent":45552}}},"OR":{"single":{"renter":{"poor":35616,"good":33720,"excellent":32760},"owner_free":{"poor":27660,"good":25764,"excellent":24804},"owner_mortgage":{"poor":41328,"good":39432,"excellent":38472}},"couple":{"renter":{"poor":50568,"good":46776,"excellent":44856},"owner_free":{"poor":42612,"good":38820,"excellent":36900},"owner_mortgage":{"poor":56280,"good":52488,"excellent":50568}}},"PA":{"single":{"renter":{"poor":33012,"good":30876,"excellent":29760},"owner_free":{"poor":27336,"good":25200,"excellent":24084},"owner_mortgage":{"poor":38196,"good":36060,"excellent":34944}},"couple":{"renter":{"poor":47952,"good":43680,"excellent":41448},"owner_free":{"poor":42276,"good":38004,"excellent":35772},"owner_mortgage":{"poor":53136,"good":48864,"excellent":46632}}},"RI":{"single":{"renter":{"poor":36312,"good":34152,"excellent":33072},"owner_free":{"poor":31044,"good":28884,"excellent":27804},"owner_mortgage":{"poor":44436,"good":42276,"excellent":41196}},"couple":{"renter":{"poor":51264,"good":46944,"excellent":44784},"owner_free":{"poor":45996,"good":41676,"excellent":39516},"owner_mortgage":{"poor":59388,"good":55068,"excellent":52908}}},"SC":{"single":{"renter":{"poor":33300,"good":30900,"excellent":29712},"owner_free":{"poor":24936,"good":22536,"excellent":21348},"owner_mortgage":{"poor":36168,"good":33768,"excellent":32580}},"couple":{"renter":{"poor":48600,"good":43800,"excellent":41424},"owner_free":{"poor":40236,"good":35436,"excellent":33060},"owner_mortgage":{"poor":51468,"good":46668,"excellent":44292}}},"SD":{"single":{"renter":{"poor":30792,"good":28584,"excellent":27528},"owner_free":{"poor":28716,"good":26508,"excellent":25452},"owner_mortgage":{"poor":39048,"good":36840,"excellent":35784}},"couple":{"renter":{"poor":47592,"good":43176,"excellent":41064},"owner_free":{"poor":45516,"good":41100,"excellent":38988},"owner_mortgage":{"poor":55848,"good":51432,"excellent":49320}}},"TN":{"single":{"renter":{"poor":32772,"good":30456,"excellent":29436},"owner_free":{"poor":25008,"good":22692,"excellent":21672},"owner_mortgage":{"poor":35568,"good":33252,"excellent":32232}},"couple":{"renter":{"poor":47616,"good":42984,"excellent":40944},"owner_free":{"poor":39852,"good":35220,"excellent":33180},"owner_mortgage":{"poor":50412,"good":45780,"excellent":43740}}},"TX":{"single":{"renter":{"poor":34344,"good":32100,"excellent":31056},"owner_free":{"poor":27816,"good":25572,"excellent":24528},"owner_mortgage":{"poor":40656,"good":38412,"excellent":37368}},"couple":{"renter":{"poor":49296,"good":44808,"excellent":42720},"owner_free":{"poor":42768,"good":38280,"excellent":36192},"owner_mortgage":{"poor":55608,"good":51120,"excellent":49032}}},"UT":{"single":{"renter":{"poor":34740,"good":32388,"excellent":31224},"owner_free":{"poor":26604,"good":24252,"excellent":23088},"owner_mortgage":{"poor":40500,"good":38148,"excellent":36984}},"couple":{"renter":{"poor":50400,"good":45696,"excellent":43368},"owner_free":{"poor":42264,"good":37560,"excellent":35232},"owner_mortgage":{"poor":56160,"good":51456,"excellent":49128}}},"VT":{"single":{"renter":{"poor":37116,"good":35136,"excellent":34152},"owner_free":{"poor":33024,"good":31044,"excellent":30060},"owner_mortgage":{"poor":44124,"good":42144,"excellent":41160}},"couple":{"renter":{"poor":54792,"good":50832,"excellent":48864},"owner_free":{"poor":50700,"good":46740,"excellent":44772},"owner_mortgage":{"poor":61800,"good":57840,"excellent":55872}}},"VA":{"single":{"renter":{"poor":37056,"good":35016,"excellent":34080},"owner_free":{"poor":27684,"good":25644,"excellent":24708},"owner_mortgage":{"poor":42168,"good":40128,"excellent":39192}},"couple":{"renter":{"poor":52344,"good":48264,"excellent":46392},"owner_free":{"poor":42972,"good":38892,"excellent":37020},"owner_mortgage":{"poor":57456,"good":53376,"excellent":51504}}},"WA":{"single":{"renter":{"poor":39792,"good":37656,"excellent":36624},"owner_free":{"poor":29496,"good":27360,"excellent":26328},"owner_mortgage":{"poor":44640,"good":42504,"excellent":41472}},"couple":{"renter":{"poor":55128,"good":50856,"excellent":48792},"owner_free":{"poor":44832,"good":40560,"excellent":38496},"owner_mortgage":{"poor":59976,"good":55704,"excellent":53640}}},"WV":{"single":{"renter":{"poor":28728,"good":26580,"excellent":25476},"owner_free":{"poor":24012,"good":21864,"excellent":20760},"owner_mortgage":{"poor":32976,"good":30828,"excellent":29724}},"couple":{"renter":{"poor":43992,"good":39696,"excellent":37488},"owner_free":{"poor":39276,"good":34980,"excellent":32772},"owner_mortgage":{"poor":48240,"good":43944,"excellent":41736}}},"WI":{"single":{"renter":{"poor":31560,"good":29376,"excellent":28296},"owner_free":{"poor":28344,"good":26160,"excellent":25080},"owner_mortgage":{"poor":38712,"good":36528,"excellent":35448}},"couple":{"renter":{"poor":47172,"good":42804,"excellent":40644},"owner_free":{"poor":43956,"good":39588,"excellent":37428},"owner_mortgage":{"poor":54324,"good":49956,"excellent":47796}}},"WY":{"single":{"renter":{"poor":31308,"good":29208,"excellent":28260},"owner_free":{"poor":27936,"good":25836,"excellent":24888},"owner_mortgage":{"poor":40908,"good":38808,"excellent":37860}},"couple":{"renter":{"poor":48420,"good":44220,"excellent":42324},"owner_free":{"poor":45048,"good":40848,"excellent":38952},"owner_mortgage":{"poor":58020,"good":53820,"excellent":51924}}},"DC":{"single":{"renter":{"poor":45000,"good":43020,"excellent":42024},"owner_free":{"poor":30768,"good":28788,"excellent":27792},"owner_mortgage":{"poor":52392,"good":50412,"excellent":49416}},"couple":{"renter":{"poor":60516,"good":56556,"excellent":54564},"owner_free":{"poor":46284,"good":42324,"excellent":40332},"owner_mortgage":{"poor":67908,"good":63948,"excellent":61956}}}};
+
+const STATE_META = [{"abbr":"AL","name":"Alabama","fips":"01"},{"abbr":"AK","name":"Alaska","fips":"02"},{"abbr":"AZ","name":"Arizona","fips":"04"},{"abbr":"AR","name":"Arkansas","fips":"05"},{"abbr":"CA","name":"California","fips":"06"},{"abbr":"CO","name":"Colorado","fips":"08"},{"abbr":"CT","name":"Connecticut","fips":"09"},{"abbr":"DE","name":"Delaware","fips":"10"},{"abbr":"DC","name":"District of Columbia","fips":"11"},{"abbr":"FL","name":"Florida","fips":"12"},{"abbr":"GA","name":"Georgia","fips":"13"},{"abbr":"HI","name":"Hawaii","fips":"15"},{"abbr":"ID","name":"Idaho","fips":"16"},{"abbr":"IL","name":"Illinois","fips":"17"},{"abbr":"IN","name":"Indiana","fips":"18"},{"abbr":"IA","name":"Iowa","fips":"19"},{"abbr":"KS","name":"Kansas","fips":"20"},{"abbr":"KY","name":"Kentucky","fips":"21"},{"abbr":"LA","name":"Louisiana","fips":"22"},{"abbr":"ME","name":"Maine","fips":"23"},{"abbr":"MD","name":"Maryland","fips":"24"},{"abbr":"MA","name":"Massachusetts","fips":"25"},{"abbr":"MI","name":"Michigan","fips":"26"},{"abbr":"MN","name":"Minnesota","fips":"27"},{"abbr":"MS","name":"Mississippi","fips":"28"},{"abbr":"MO","name":"Missouri","fips":"29"},{"abbr":"MT","name":"Montana","fips":"30"},{"abbr":"NE","name":"Nebraska","fips":"31"},{"abbr":"NV","name":"Nevada","fips":"32"},{"abbr":"NH","name":"New Hampshire","fips":"33"},{"abbr":"NJ","name":"New Jersey","fips":"34"},{"abbr":"NM","name":"New Mexico","fips":"35"},{"abbr":"NY","name":"New York","fips":"36"},{"abbr":"NC","name":"North Carolina","fips":"37"},{"abbr":"ND","name":"North Dakota","fips":"38"},{"abbr":"OH","name":"Ohio","fips":"39"},{"abbr":"OK","name":"Oklahoma","fips":"40"},{"abbr":"OR","name":"Oregon","fips":"41"},{"abbr":"PA","name":"Pennsylvania","fips":"42"},{"abbr":"RI","name":"Rhode Island","fips":"44"},{"abbr":"SC","name":"South Carolina","fips":"45"},{"abbr":"SD","name":"South Dakota","fips":"46"},{"abbr":"TN","name":"Tennessee","fips":"47"},{"abbr":"TX","name":"Texas","fips":"48"},{"abbr":"UT","name":"Utah","fips":"49"},{"abbr":"VT","name":"Vermont","fips":"50"},{"abbr":"VA","name":"Virginia","fips":"51"},{"abbr":"WA","name":"Washington","fips":"53"},{"abbr":"WV","name":"West Virginia","fips":"54"},{"abbr":"WI","name":"Wisconsin","fips":"55"},{"abbr":"WY","name":"Wyoming","fips":"56"}];
+
+const FIPS_TO_ABBR = {"01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","11":"DC","12":"FL","13":"GA","15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA","26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE","32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY","37":"NC","38":"ND","39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD","47":"TN","48":"TX","49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY"};
+
+// National published figures (2025 infographic) — used verbatim in Infographic section.
+const NATIONAL = {single:{ei:34032,ssb:23704,covered:69.7,gap:10328}, couple:{ei:47016,ssb:36703,covered:78.1,gap:10313},
+  single2015:{ei:23088,ssb:15943,covered:69.1,gap:7145}, couple2015:{ei:33504,ssb:26009,covered:77.6,gap:7495}};
+// Couple SSB has no published state-level figure; dashboard couple view derives it from each
+// state's real single benefit x national couple/single ratio. Flagged as estimate in UI.
+const COUPLE_SSB_RATIO = 36703/23704;
+
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const usd  = n => "$"+Math.round(n).toLocaleString("en-US");
+const usd0 = n => "$"+Math.round(n).toLocaleString("en-US");
+const pct  = n => n.toFixed(1)+"%";
+
+// Coverage model. Single uses each state's real avg benefit (SSA, Dec 2023).
+// Couple SSB has no published state figure -> derived from the real single benefit
+// times the national couple/single ratio (flagged as an estimate in the UI).
+function ssbAnnual(abbr, household){
+  const base = SSA_ANNUAL[abbr];
+  return household==="couple" ? Math.round(base*COUPLE_SSB_RATIO) : base;
+}
+function eiAnnual(abbr, household, housing, health="good"){
+  return EI_DATA[abbr][household][housing][health];
+}
+function coverage(abbr, household, housing, health="good"){
+  const ei = eiAnnual(abbr, household, housing, health);
+  const ssb = ssbAnnual(abbr, household);
+  return { ei, ssb, cov: ssb/ei*100, gap: ei-ssb };
+}
+
+/* ============================================================
+   ACTIVE-SECTION NAV HIGHLIGHT
+   ============================================================ */
+const navObserver = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting){
+    $$("#nav .links a").forEach(a=>a.classList.toggle("active", a.dataset.sec===e.target.id));
+  }});
+},{rootMargin:"-45% 0px -50% 0px"});
+["infographic","dashboard","calculator"].forEach(id=>navObserver.observe($("#"+id)));
+
+/* ============================================================
+   SECTION 1 — INFOGRAPHIC
+   Faithful recreation of the PDF slide + an interactive layer
+   (count-ups, state silhouettes, modals & popovers).
+   ============================================================ */
+
+/* ---- count-up animation on scroll-into-view ---- */
+function animateCount(el){
+  const target=parseFloat(el.dataset.count), pre=el.dataset.prefix||"", suf=el.dataset.suffix||"";
+  const decimals=(el.dataset.count.split(".")[1]||"").length;
+  const dur=1400, t0=performance.now();
+  function step(t){
+    const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3), v=target*e;
+    el.textContent = pre + (decimals? v.toFixed(decimals) : Math.round(v).toLocaleString("en-US")) + suf;
+    if(k<1) requestAnimationFrame(step);
+    else el.textContent = pre + (decimals? target.toFixed(decimals) : Math.round(target).toLocaleString("en-US")) + suf;
+  }
+  requestAnimationFrame(step);
+}
+const countObserver = new IntersectionObserver((es,obs)=>{
+  es.forEach(e=>{ if(e.isIntersecting){ animateCount(e.target); obs.unobserve(e.target); }});
+},{threshold:.6});
+$$("[data-count]").forEach(el=>countObserver.observe(el));
+
+/* ---- animate the gap bars when they scroll into view ---- */
+const barObserver = new IntersectionObserver((es,obs)=>{
+  es.forEach(e=>{ if(e.isIntersecting){
+    const cov=parseFloat(e.target.dataset.cov);
+    e.target.querySelector(".cov").style.width = cov+"%";
+    e.target.querySelector(".unc").style.width = (100-cov)+"%";
+    e.target.querySelector(".unc").textContent = "Gap "+(100-cov).toFixed(1)+"%";
+    obs.unobserve(e.target);
+  }});
+},{threshold:.4});
+$$("#infographic .gapbar").forEach(el=>barObserver.observe(el));
+
+/* ============================================================
+   Reusable modal + anchored-popover system (the interactive layer)
+   ============================================================ */
+function closeOverlays(){ $$(".overlay,.pop").forEach(n=>n.remove()); document.removeEventListener("keydown",escClose); }
+function escClose(e){ if(e.key==="Escape") closeOverlays(); }
+function openModal(title, bodyHTML){
+  closeOverlays();
+  const o=document.createElement("div"); o.className="overlay";
+  o.innerHTML=`<div class="modal" role="dialog" aria-modal="true">
+      <div class="mhead"><h3>${title}</h3><button class="x" aria-label="Close">&times;</button></div>
+      <div class="mbody">${bodyHTML}</div></div>`;
+  o.addEventListener("click",e=>{ if(e.target===o||e.target.closest(".x")) closeOverlays(); });
+  document.body.appendChild(o);
+  document.addEventListener("keydown",escClose);
+}
+function openPopover(anchor, html){
+  closeOverlays();
+  const p=document.createElement("div"); p.className="pop"; p.innerHTML=html+`<div class="arw"></div>`;
+  document.body.appendChild(p);
+  const r=anchor.getBoundingClientRect(), pw=p.offsetWidth, ph=p.offsetHeight;
+  const sx=window.scrollX, sy=window.scrollY;
+  let left = r.left+sx + r.width/2 - pw/2;
+  left = Math.max(10+sx, Math.min(left, sx+document.documentElement.clientWidth-pw-10));
+  let top = r.top+sy - ph - 12;          // prefer above
+  let below=false;
+  if(top < sy+8){ top = r.bottom+sy + 12; below=true; }   // flip below if no room
+  p.style.left=left+"px"; p.style.top=top+"px";
+  const arw=p.querySelector(".arw");
+  arw.style.left=(r.left+sx + r.width/2 - left - 6)+"px";
+  arw.style[below?"top":"bottom"] = "-6px";
+  // dismiss on outside click
+  setTimeout(()=>document.addEventListener("click",function oc(e){
+    if(!p.contains(e.target) && e.target!==anchor && !anchor.contains(e.target)){ p.remove(); document.removeEventListener("click",oc);}
+  }),0);
+  document.addEventListener("keydown",escClose);
+}
+
+/* ---- The 8 highlighted states (published 2025 figures, verbatim from the slide) ---- */
+const CARD_STATES = {
+  least:[["CA","California",56],["MA","Massachusetts",59],["NY","New York",58],["MD","Maryland",65]],
+  most :[["WV","West Virginia",86],["AL","Alabama",84],["IA","Iowa",84],["IN","Indiana",86]]
+};
+// Render cards now (with %), silhouettes get drawn once the map geometry loads.
+function renderSilCards(){
+  for(const grp of ["least","most"]){
+    $("#"+grp+"-cards").innerHTML = CARD_STATES[grp].map(([ab,nm,p])=>`
+      <div class="sil ${grp}" data-abbr="${ab}" data-pct="${p}" tabindex="0" role="button" aria-label="${nm} ${p}% — details">
+        <div class="silsvg" id="sil-${ab}"></div>
+        <div class="pct">${p}%</div>
+        <div class="nm">${nm}</div>
+        <span class="clickdot">i</span>
+      </div>`).join("");
+  }
+  $$(".sil").forEach(c=>{
+    const open=()=>stateCardPopover(c);
+    c.addEventListener("click",open);
+    c.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); }});
+  });
+}
+function stateCardPopover(card){
+  const ab=card.dataset.abbr, p=+card.dataset.pct;
+  const nm=STATE_META.find(m=>m.abbr===ab).name;
+  const ei=eiAnnual(ab,"single","renter","good");          // real Elder Index (EI-2025)
+  const ssb=Math.round(ei*p/100);                           // implied 2025 benefit consistent w/ published %
+  const gap=ei-ssb;
+  const lowHigh = p<70 ? "one of the lowest in the nation" : "among the highest in the nation";
+  openPopover(card, `
+    <h4>${nm} — single older renter</h4>
+    <div class="prow"><span>Elder Index (annual)</span><b>${usd(ei)}</b></div>
+    <div class="prow"><span>Avg. Social Security</span><b>${usd(ssb)}</b></div>
+    <div class="prow"><span>Coverage</span><b>${p}%</b></div>
+    <div class="prow"><span>Annual gap</span><b style="color:#ffb4ab">${usd(gap)}</b></div>
+    <div class="says">In ${nm}, a single older renter needs <b>${usd(ei)}/yr</b> to live independently. Social Security covers about <b>${p}%</b> — ${lowHigh} — leaving roughly <b>${usd(gap)}/yr</b> (${usd(gap/12)}/mo) uncovered.</div>`);
+}
+renderSilCards();
+
+/* ---- "U.S. AVG = 70%" → modal explaining the Elder Index ---- */
+function explainElderIndex(){
+  openModal("What is the Elder Index — and what does 70% mean?", `
+    <p>The <b>Elder Index</b> measures what older adults (65+) actually need to live independently in their community — the real cost of <b>housing, food, health care, and transportation</b>. Unlike the federal poverty line, it varies by where you live and your situation.</p>
+    <p>Nationwide, the average Social Security benefit covers only about <b>70%</b> of that need for a single older renter.</p>
+    <div class="hl">The other ~30% — about <b>$10,328 a year</b>, or <b>$861 a month</b> — is the <b>gap</b>: basic costs that Social Security simply doesn't reach.</div>
+    <p>That's the heart of this story: Social Security is the foundation of retirement income, but for millions it isn't enough to cover the basics.</p>`);
+}
+$("#usavg-tag").addEventListener("click",explainElderIndex);
+$("#usavg-tag").addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();explainElderIndex();} });
+
+/* ---- comparison-table year rows → highlight + explainer popover ---- */
+const YEAR_NOTE = {
+  "2025":`<h4>2025</h4><div class="says">The single Elder Index reached <b>$34,032</b> and the average benefit <b>$23,704</b> — <b>69.7%</b> covered, a <b>$10,328</b> gap. Housing and health-care costs climbed in step with benefit growth, so the <i>percentage</i> held while the <i>dollar</i> gap widened.</div>`,
+  "2015":`<h4>2015</h4><div class="says">The single Elder Index was <b>$23,088</b> and the average benefit <b>$15,943</b> — <b>69.1%</b> covered, a <b>$7,145</b> gap. A decade later coverage barely moved (+0.6 pts) but the dollar gap grew <b>+$3,183</b>.</div>`
+};
+$$("#infographic tr.yr").forEach(row=>{
+  row.addEventListener("click",()=>{
+    const yr=row.dataset.year;
+    $$("#infographic table.cmp tr").forEach(r=>r.classList.remove("hl"));
+    row.classList.add("hl");
+    $$(`#infographic tr[data-y="${yr}"]`).forEach(r=>r.classList.add("hl"));
+    openPopover(row, YEAR_NOTE[yr]);
+  });
+});
+
+/* ---- "Then vs Now" box → modal on why the gap barely changed ---- */
+function explainThenNow(){
+  openModal("Why has the gap barely changed in a decade?", `
+    <p>Every year, Social Security applies a <b>cost-of-living adjustment (COLA)</b> tied to general inflation (the CPI-W). Over 2015&ndash;2025 that lifted the average single benefit from <b>$15,943</b> to <b>$23,704</b>.</p>
+    <p>But the <b>Elder Index</b> tracks the costs older adults actually face — especially <b>housing and health care</b> — which rose just as fast, pushing the single index from <b>$23,088</b> to <b>$34,032</b>.</p>
+    <div class="hl">Because benefits <i>and</i> needs grew together, coverage held near <b>70%</b> (69.1% &rarr; 69.7%). Yet since both sides grew, the <b>dollar shortfall widened from $7,145 to $10,328</b> — up more than 45%.</div>
+    <p>In short: COLA keeps benefits flat against general inflation, but not against the specific, faster-rising costs of aging in place.</p>`);
+}
+$("#tvn").addEventListener("click",explainThenNow);
+$("#tvn").addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();explainThenNow();} });
+
+/* ---- gap bars → popover translating the dollar gap into real costs ---- */
+$$("#infographic .gapbar.clickable").forEach(bar=>{
+  bar.querySelector(".track").addEventListener("click",()=>{
+    const gap=+bar.dataset.gap, who=bar.dataset.who;
+    const groceries=400, rent=1500, medicare=185, util=250; // rough U.S. monthly averages
+    openPopover(bar, `
+      <h4>${usd(gap)}/year — what that gap means</h4>
+      <div class="says">For ${who}, the uncovered gap of <b>${usd(gap)}</b> a year (about <b>${usd(gap/12)}/month</b>) is roughly:</div>
+      <div class="prow"><span>Months of groceries (~$400/mo)</span><b>${Math.round(gap/groceries)}</b></div>
+      <div class="prow"><span>Months of average U.S. rent (~$1,500/mo)</span><b>${(gap/rent/1).toFixed(1).replace(/\.0$/,'')}</b></div>
+      <div class="prow"><span>Months of Medicare Part B (~$185/mo)</span><b>${Math.round(gap/medicare)}</b></div>
+      <div class="prow"><span>Months of utilities (~$250/mo)</span><b>${Math.round(gap/util)}</b></div>`);
+  });
+});
+
+/* ============================================================
+   SECTION 2 — DASHBOARD
+   ============================================================ */
+const dash = { household:"single", housing:"renter", health:"good", selected:null };
+const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([55,100]).clamp(true);
+const housingLabel = h => ({renter:"renter", owner_mortgage:"owner with mortgage", owner_free:"owner, no mortgage"}[h]);
+
+function dashRows(){
+  return STATE_META.map(m=>{
+    const c=coverage(m.abbr,dash.household,dash.housing,dash.health);
+    return {...m, ...c};
+  });
+}
+function nationalAvg(rows){ return d3.mean(rows,r=>r.cov); }
+function filterText(){ return `${dash.household} · ${housingLabel(dash.housing)} · ${dash.health} health`; }
+
+function renderSummary(rows){
+  const avg=nationalAvg(rows);
+  const below=rows.filter(r=>r.cov<avg).length;
+  const hi=rows.reduce((a,b)=>b.cov>a.cov?b:a);
+  const lo=rows.reduce((a,b)=>b.cov<a.cov?b:a);
+  $("#summary").innerHTML=`
+    <div class="s"><div class="v">${pct(avg)}</div><div class="l">Average coverage across states</div></div>
+    <div class="s"><div class="v">${below}</div><div class="l">states below that average</div></div>
+    <div class="s"><div class="v">${hi.abbr} &middot; ${pct(hi.cov)}</div><div class="l">Highest coverage &mdash; ${hi.name}</div></div>
+    <div class="s"><div class="v">${lo.abbr} &middot; ${pct(lo.cov)}</div><div class="l">Lowest coverage &mdash; ${lo.name}</div></div>`;
+}
+
+// Worst vs Best persistent callout (icons + text, so color is never the only cue)
+function renderWorstBest(rows){
+  const hi=rows.reduce((a,b)=>b.cov>a.cov?b:a);
+  const lo=rows.reduce((a,b)=>b.cov<a.cov?b:a);
+  $("#worstbest").innerHTML=`
+    <div class="wb worst"><div class="ic" aria-hidden="true">&#9660;</div><div>
+        <div class="lbl">Largest gap &middot; lowest coverage</div>
+        <div class="st">${lo.name}</div>
+        <div class="det">${pct(lo.cov)} covered &middot; ${usd(lo.gap)}/yr short (${usd(lo.gap/12)}/mo)</div></div></div>
+    <div class="wb best"><div class="ic" aria-hidden="true">&#9650;</div><div>
+        <div class="lbl">Smallest gap &middot; highest coverage</div>
+        <div class="st">${hi.name}</div>
+        <div class="det">${pct(hi.cov)} covered &middot; ${usd(hi.gap)}/yr short (${usd(hi.gap/12)}/mo)</div></div></div>`;
+}
+
+function renderPanel(r){
+  if(!r){ return; }
+  const est = dash.household==="couple" ? ' <span class="info" tabindex="0" style="background:var(--gold-dark)">i<span class="tip">Couple benefit is estimated from this state’s real single benefit × the national couple/single ratio; no published state-level couple figure exists.</span></span>' : "";
+  $("#panel").innerHTML=`
+    <div class="pname">${r.name}</div>
+    <div class="pcov" style="color:${colorScale(r.cov)}">${pct(r.cov)} covered</div>
+    <div class="prow"><span>Elder Index (annual)</span><b>${usd(r.ei)}</b></div>
+    <div class="prow"><span>Avg. Social Security${est}</span><b>${usd(r.ssb)}</b></div>
+    <div class="prow"><span>Annual gap</span><b style="color:var(--red)">${usd(r.gap)}</b></div>
+    <div class="prow"><span>Monthly gap</span><b style="color:var(--red)">${usd(r.gap/12)}</b></div>
+    <div class="prow"><span>Filter</span><b style="text-transform:capitalize">${filterText()}</b></div>`;
+}
+
+let mapReady=false, statePaths=null;
+function paintMap(rows){
+  if(!mapReady) return;
+  const by={}; rows.forEach(r=>by[r.abbr]=r);
+  statePaths.transition().duration(550)
+    .attr("fill", d=>{ const a=FIPS_TO_ABBR[d.id]; return a&&by[a]?colorScale(by[a].cov):"#dfe6ec"; });
+  statePaths.classed("sel", d=> FIPS_TO_ABBR[d.id]===dash.selected)
+    .attr("aria-label", d=>{ const a=FIPS_TO_ABBR[d.id], row=by[a]; return row? `${row.name}: ${pct(row.cov)} covered, ${usd(row.gap)} annual gap` : ""; });
+}
+
+function renderBars(rows){
+  const data=[...rows].sort((a,b)=>a.cov-b.cov);
+  const avg=nationalAvg(rows);
+  const W=420, rowH=15, padL=34, padR=46, padT=22, padB=6;
+  const H=padT+padB+data.length*rowH;
+  const x=d3.scaleLinear().domain([0, Math.max(100, d3.max(data,d=>d.cov))]).range([padL, W-padR]);
+  const svg=d3.select("#bars").selectAll("svg").data([0]);
+  const g=svg.enter().append("svg").attr("viewBox",`0 0 ${W} ${H}`).attr("role","list")
+            .merge(svg).attr("viewBox",`0 0 ${W} ${H}`);
+  g.selectAll("*").remove();
+  g.append("line").attr("class","reff").attr("x1",x(avg)).attr("x2",x(avg)).attr("y1",padT-6).attr("y2",H-padB);
+  g.append("text").attr("class","refl").attr("x",x(avg)).attr("y",padT-10).attr("text-anchor","middle").text("avg "+avg.toFixed(0)+"%");
+  const row=g.selectAll("g.barrow").data(data).enter().append("g").attr("class","barrow")
+    .attr("transform",(d,i)=>`translate(0,${padT+i*rowH})`);
+  row.append("text").attr("x",padL-4).attr("y",rowH-4).attr("text-anchor","end").text(d=>d.abbr);
+  row.append("rect").attr("class","b").attr("x",padL).attr("y",2).attr("height",rowH-5)
+    .attr("width",d=>x(d.cov)-padL).attr("rx",2).attr("fill",d=>colorScale(d.cov))
+    .attr("tabindex",0).attr("role","listitem")
+    .attr("aria-label",d=>`${d.name}: ${pct(d.cov)} covered, ${usd(d.gap)} annual gap. Press Enter to pin.`)
+    .classed("sel",d=>d.abbr===dash.selected)
+    .on("mouseenter",(e,d)=>renderPanel(d))
+    .on("focus",(e,d)=>renderPanel(d))
+    .on("keydown",(e,d)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); dash.selected=d.abbr; update(); }})
+    .on("click",(e,d)=>{ dash.selected=d.abbr; update(); });
+  row.append("text").attr("x",d=>x(d.cov)+4).attr("y",rowH-4).attr("fill","#5b6b7b").text(d=>d.cov.toFixed(0)+"%");
+}
+
+/* ---- Compare states tool ---- */
+const cmp = { a:"CA", b:"WV", c:"" };
+function initCompare(){
+  const opts = STATE_META.map(m=>`<option value="${m.abbr}">${m.name}</option>`).join("");
+  $("#cmp-a").innerHTML=opts; $("#cmp-b").innerHTML=opts;
+  $("#cmp-c").innerHTML=`<option value="">— none —</option>`+opts;
+  $("#cmp-a").value=cmp.a; $("#cmp-b").value=cmp.b; $("#cmp-c").value=cmp.c;
+  ["a","b","c"].forEach(k=>$("#cmp-"+k).onchange=e=>{ cmp[k]=e.target.value; renderCompare(); });
+}
+function renderCompare(){
+  $("#cmp-filters").textContent = filterText();
+  const picks=[cmp.a,cmp.b,cmp.c].filter(Boolean);
+  if(!picks.length){ $("#compare-cards").innerHTML=`<p style="color:var(--muted)">Pick at least one state above.</p>`; return; }
+  const data=picks.map(ab=>{ const c=coverage(ab,dash.household,dash.housing,dash.health);
+    return {ab, name:STATE_META.find(m=>m.abbr===ab).name, ...c}; });
+  const maxC=Math.max(...data.map(d=>d.cov)), minC=Math.min(...data.map(d=>d.cov));
+  $("#compare-cards").innerHTML=data.map(d=>{
+    const best=data.length>1&&d.cov===maxC, worst=data.length>1&&d.cov===minC&&!best;
+    const standing = best?`<div class="crow"><span>Standing</span><b style="color:var(--green)">&#9650; best of selected</b></div>`
+                   : worst?`<div class="crow"><span>Standing</span><b style="color:var(--red)">&#9660; widest gap of selected</b></div>`:"";
+    return `<div class="ccard ${best?'cmp-best':worst?'cmp-worst':''}">
+      <div class="chd" style="background:var(--navy)"><span class="cn">${d.name}</span><span class="cc">${pct(d.cov)}</span></div>
+      <div class="cstrip" style="height:5px;background:${colorScale(d.cov)}"></div>
+      ${standing}
+      <div class="crow"><span>Elder Index</span><b>${usd(d.ei)}</b></div>
+      <div class="crow"><span>Avg. Social Security</span><b>${usd(d.ssb)}</b></div>
+      <div class="crow"><span>Coverage</span><b>${pct(d.cov)}</b></div>
+      <div class="crow"><span>Annual gap</span><b style="color:var(--red)">${usd(d.gap)}</b></div>
+      <div class="crow"><span>Monthly gap</span><b style="color:var(--red)">${usd(d.gap/12)}</b></div>
+    </div>`;
+  }).join("");
+}
+
+function renderMethod(elId){
+  $(elId).innerHTML = `<b>Methodology.</b> SSB figures sourced from the <b>SSA OASDI Beneficiaries by State and County report (Dec 2023)</b>. Elder Index figures from the <b>UMass Boston Gerontology Institute (2025)</b>. Coverage percentages may differ slightly from the published 2025 infographic figures due to benefit vintage.`;
+}
+
+function update(){
+  const rows=dashRows();
+  renderSummary(rows);
+  renderWorstBest(rows);
+  paintMap(rows);
+  renderBars(rows);
+  renderCompare();
+  if(dash.selected){ const r=rows.find(x=>x.abbr===dash.selected); renderPanel(r); }
+}
+
+// segmented control wiring (dashboard) — keeps aria-pressed in sync for screen readers
+function wireSeg(id, apply){
+  $$("#"+id+" button").forEach(b=>b.onclick=()=>{
+    $$("#"+id+" button").forEach(x=>{ x.classList.remove("on"); x.setAttribute("aria-pressed","false"); });
+    b.classList.add("on"); b.setAttribute("aria-pressed","true");
+    apply(b.dataset.v); update();
+  });
+}
+wireSeg("ctl-household", v=>dash.household=v);
+wireSeg("ctl-housing",  v=>dash.housing=v);
+wireSeg("ctl-health",   v=>dash.health=v);
+
+// Load US map geometry from CDN (graceful fallback to bar chart if it fails / offline)
+function loadMap(){
+  const URL="https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+  d3.json(URL).then(us=>{
+    const states=topojson.feature(us, us.objects.states).features
+      .filter(f=>FIPS_TO_ABBR[f.id]); // 50 states + DC only
+    const W=960,H=600;
+    const proj=d3.geoAlbersUsa().fitSize([W,H],{type:"FeatureCollection",features:states});
+    const path=d3.geoPath(proj);
+    const svg=d3.select("#map").append("svg").attr("viewBox",`0 0 ${W} ${H}`);
+    statePaths=svg.selectAll("path.state").data(states).enter().append("path")
+      .attr("class","state").attr("d",path).attr("fill","#dfe6ec")
+      .attr("tabindex",0).attr("role","button")
+      .on("mousemove",(e,d)=>{ const a=FIPS_TO_ABBR[d.id]; renderPanel(dashRows().find(r=>r.abbr===a)); })
+      .on("focus",(e,d)=>{ const a=FIPS_TO_ABBR[d.id]; renderPanel(dashRows().find(r=>r.abbr===a)); })
+      .on("keydown",(e,d)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); dash.selected=FIPS_TO_ABBR[d.id]; update(); }})
+      .on("click",(e,d)=>{ dash.selected=FIPS_TO_ABBR[d.id]; update(); });
+    mapReady=true;
+    $("#maploading").style.display="none";
+    update();
+    // The infographic section reuses the same geometry for silhouettes + its own map.
+    drawInfographicGeo(us, states);
+  }).catch(()=>{
+    $("#maploading").innerHTML="Map geometry couldn’t load (needs internet). The ranked bar chart below shows the same data.";
+    showNotice("Map tiles require an internet connection. <b>All benefit data is built in</b> &mdash; the ranked chart works offline.");
+    update();
+  });
+}
+
+/* Draw the infographic's silhouette cards, U.S. outline, and center choropleth
+   from the same TopoJSON. Faithful to the PDF's state-shape cards and orange map. */
+function drawInfographicGeo(us, states){
+  const byFips={}; states.forEach(f=>byFips[f.id]=f);
+  // (a) 8 state silhouette cards
+  for(const grp of ["least","most"]){
+    for(const [ab,nm,p] of CARD_STATES[grp]){
+      const fips=STATE_META.find(m=>m.abbr===ab).fips, feat=byFips[fips];
+      const host=document.getElementById("sil-"+ab); if(!feat||!host) continue;
+      const w=64,h=38, proj=d3.geoMercator().fitExtent([[4,3],[w-4,h-3]],feat);
+      const sp=d3.geoPath(proj);
+      d3.select(host).append("svg").attr("viewBox",`0 0 ${w} ${h}`)
+        .append("path").attr("d",sp(feat))
+        .attr("fill",grp==="least"?"#f7d7d2":"#d6ecdc")
+        .attr("stroke",grp==="least"?"var(--red)":"var(--green)").attr("stroke-width",1);
+    }
+  }
+  // (b) U.S. outline next to "U.S. AVG = 70%"
+  const nation = us.objects.nation ? topojson.feature(us,us.objects.nation)
+               : {type:"FeatureCollection",features:states};
+  const uw=74,uh=44, up=d3.geoAlbersUsa().fitExtent([[2,2],[uw-2,uh-2]], nation);
+  d3.select("#ussil").append("svg").attr("viewBox",`0 0 ${uw} ${uh}`)
+    .append("path").attr("d",d3.geoPath(up)(nation)).attr("fill","var(--navy)").attr("opacity",.9);
+  // (c) center choropleth — single older renter, orange palette echoing the slide
+  const covs = states.map(f=>coverage(FIPS_TO_ABBR[f.id],"single","renter").cov);
+  const orange = d3.scaleSequential(d3.interpolateYlOrBr).domain([d3.min(covs)-2, d3.max(covs)+2]);
+  const W=460,H=290, mp=d3.geoAlbersUsa().fitSize([W,H],{type:"FeatureCollection",features:states});
+  const svg=d3.select("#pdf-map").append("svg").attr("viewBox",`0 0 ${W} ${H}`);
+  svg.selectAll("path.pstate").data(states).enter().append("path").attr("class","pstate")
+    .attr("d",d3.geoPath(mp))
+    .attr("fill",d=>orange(coverage(FIPS_TO_ABBR[d.id],"single","renter").cov))
+    .append("title").text(d=>{ const a=FIPS_TO_ABBR[d.id], r=coverage(a,"single","renter");
+      return STATE_META.find(m=>m.abbr===a).name+": "+pct(r.cov)+" covered"; });
+}
+
+function showNotice(html){
+  const n=$("#notice"); n.innerHTML=html; n.style.display="block";
+  setTimeout(()=>{ n.style.transition="opacity .5s"; n.style.opacity="0"; setTimeout(()=>n.style.display="none",600); }, 7000);
+}
+
+/* ============================================================
+   SECTION 3 — CALCULATOR
+   ============================================================ */
+const calc={ state:"MA", household:"single", housing:"renter", health:"good" };
+// populate state dropdown
+$("#c-state").innerHTML = STATE_META.map(m=>`<option value="${m.abbr}" ${m.abbr==='MA'?'selected':''}>${m.name}</option>`).join("");
+
+function calcDefaults(){ // default monthly SSB for current state/household
+  return ssbAnnual(calc.state, calc.household)/12;
+}
+let calcSummary = "";   // plain-English summary kept current for the Copy button
+function renderCalc(){
+  const ei = eiAnnual(calc.state, calc.household, calc.housing, calc.health);
+  const ssbMo = $("#c-ssb").value!=="" ? +$("#c-ssb").value : calcDefaults();
+  const extraMo = $("#c-extra").value!=="" ? +$("#c-extra").value : 0;
+  const ssbAnnualVal = Math.round(ssbMo*12);
+  const incomeAnnual = (ssbMo+extraMo)*12;
+  const diff = incomeAnnual - ei;            // + surplus / - gap
+  const covPct = incomeAnnual/ei*100;
+  const stateName = STATE_META.find(m=>m.abbr===calc.state).name;
+  const isGap = diff<0, mag=Math.abs(diff);
+  const usingAvg = $("#c-ssb").value==="";
+  const hh = calc.household==="single" ? "a single older adult" : "an older couple";
+  const verb = calc.housing==="renter" ? "renting their home"
+            : calc.housing==="owner_mortgage" ? "owning a home with a mortgage" : "owning a home without a mortgage";
+
+  $("#c-out").innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px">
+      <span class="verdict ${isGap?'gap':'sur'}"><span class="vic" aria-hidden="true">${isGap?'▼':'▲'}</span>${isGap?'Annual gap':'Annual surplus'}</span>
+      <button class="copybtn" id="c-copy" aria-label="Copy a plain-English summary of this result to the clipboard">&#10697; Copy result</button>
+    </div>
+    <div class="big" style="color:${isGap?'#ffb4ab':'#9be7b4'}">${usd(mag)}</div>
+    <div style="color:#bcd0e2;font-size:.9rem;margin-bottom:14px">${isGap?'short of':'above'} the Elder Index &middot; ${usd(mag/12)}/month</div>
+    <div class="cbar" role="img" aria-label="${covPct.toFixed(0)} percent of the Elder Index covered">
+      <i class="c" style="width:${Math.min(100,covPct)}%">${covPct>=14?('Covered '+covPct.toFixed(0)+'%'):''}</i>
+      ${covPct<100?`<i class="u" style="width:${100-covPct}%">${(100-covPct)>=12?('Gap '+(100-covPct).toFixed(0)+'%'):''}</i>`:``}
+    </div>
+    <div class="orow"><span>Elder Index (${calc.health} health, ${housingLabel(calc.housing)})</span><b>${usd(ei)}/yr</b></div>
+    <div class="orow"><span>Estimated total income</span><b>${usd(incomeAnnual)}/yr</b></div>
+    <div class="orow"><span>% of Elder Index covered</span><b>${covPct.toFixed(1)}%</b></div>
+    <div class="orow"><span>Monthly ${isGap?'gap':'surplus'}</span><b style="color:${isGap?'#ffb4ab':'#9be7b4'}">${usd(mag/12)}</b></div>`;
+
+  $("#interp")?.remove();
+  const interp=document.createElement("div"); interp.className="interp"; interp.id="interp";
+  interp.innerHTML = `In <b>${stateName}</b>, ${hh} ${verb} needs <b>${usd(ei)}/year</b> to live independently. ${usingAvg?`With the average Social Security benefit`:`With the income entered`}, they ${isGap?`fall short by <b>${usd(mag)}</b> — that’s <b>${usd(mag/12)}/month</b> uncovered.`:`have a surplus of <b>${usd(mag)}</b> — about <b>${usd(mag/12)}/month</b> to spare.`}`;
+  $("#c-out").after(interp);
+
+  // Plain-English, citable summary for the Copy button
+  const incLabel = extraMo>0 ? `Social Security and other income (${usd(incomeAnnual)}/yr)` : `Social Security (${usd(ssbAnnualVal)}/yr)`;
+  calcSummary = isGap
+    ? `In ${stateName}, ${hh} ${verb} faces a ${usd(mag)} annual gap between ${incLabel} and the Elder Index (${usd(ei)}/yr). That's ${usd(mag/12)}/month uncovered. (Health: ${calc.health}.) Source: UMass Boston Elder Index 2025 + SSA OASDI 2023.`
+    : `In ${stateName}, ${hh} ${verb} has a ${usd(mag)} annual surplus above the Elder Index (${usd(ei)}/yr), with ${incLabel}. That's ${usd(mag/12)}/month to spare. (Health: ${calc.health}.) Source: UMass Boston Elder Index 2025 + SSA OASDI 2023.`;
+  $("#c-copy").onclick = ()=>copyResult($("#c-copy"));
+
+  // "What does $X look like?" context (rough national monthly averages)
+  const G=400, M=185, T=500; // groceries / Medicare Part B-ish / transportation per month
+  $("#c-context").innerHTML = isGap ? `
+    <div class="c"><div class="n">${Math.round(mag/G)}</div><div class="l">months of groceries (~$400/mo)</div></div>
+    <div class="c"><div class="n">${Math.round(mag/M)}</div><div class="l">months of Medicare Part B (~$185/mo)</div></div>
+    <div class="c"><div class="n">${Math.round(mag/T)}</div><div class="l">months of transportation (~$500/mo)</div></div>`
+   : `<div class="c" style="grid-column:1/-1"><div class="n">${usd(mag/12)}/mo</div><div class="l">estimated monthly cushion above basic needs</div></div>`;
+
+  renderTrend();
+  // reflect SSB placeholder with the live default
+  $("#c-ssb").placeholder = usd(calcDefaults()).replace("$","")+" (state avg)";
+}
+
+// Copy the current summary; robust fallback if the async clipboard API is unavailable (e.g. file://)
+function copyResult(btn){
+  const done=()=>{ const t=btn.innerHTML; btn.innerHTML="&#10003; Copied!"; btn.classList.add("done");
+    setTimeout(()=>{ btn.innerHTML=t; btn.classList.remove("done"); },1800); };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(calcSummary).then(done).catch(()=>fallbackCopy(calcSummary,done));
+  } else fallbackCopy(calcSummary, done);
+}
+function fallbackCopy(text, done){
+  const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand("copy"); done(); }catch(e){ showNotice("Couldn't copy automatically — select and copy the summary manually."); }
+  ta.remove();
+}
+
+// Historical 'Gap over time' sparkline (national 2015 & 2025 anchors as a proxy)
+function renderTrend(){
+  const t = calc.household==="couple"
+    ? {g15:NATIONAL.couple2015.gap, g25:NATIONAL.couple.gap, c15:NATIONAL.couple2015.covered, c25:NATIONAL.couple.covered, who:"couple"}
+    : {g15:NATIONAL.single2015.gap, g25:NATIONAL.single.gap, c15:NATIONAL.single2015.covered, c25:NATIONAL.single.covered, who:"single"};
+  const W=320,H=104,padL=8,padR=12,padT=24,padB=26;
+  const ymin=Math.min(t.g15,t.g25)*0.78, ymax=Math.max(t.g15,t.g25)*1.06;
+  const X=k=>padL+k*(W-padL-padR);
+  const Y=v=>padT+(1-(v-ymin)/(ymax-ymin))*(H-padT-padB);
+  const p15=[X(0),Y(t.g15)], p25=[X(1),Y(t.g25)];
+  $("#c-trend").innerHTML=`
+    <h4>Gap over time <span class="info" tabindex="0">i<span class="tip">Only 2015 and 2025 are published, so this shows the national ${t.who}-renter trend as a proxy. It illustrates how the dollar gap grew even as the coverage percentage held roughly flat.</span></span></h4>
+    <div class="sub">National ${t.who}-renter trend (proxy) &middot; coverage held ${t.c15}% &rarr; ${t.c25}% while the dollar gap grew</div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Line chart: national ${t.who} gap rose from ${usd(t.g15)} in 2015 to ${usd(t.g25)} in 2025.">
+      <line x1="${padL}" x2="${W-padR}" y1="${H-padB}" y2="${H-padB}" stroke="#e3e8ee"/>
+      <line x1="${p15[0]}" y1="${p15[1]}" x2="${p25[0]}" y2="${p25[1]}" stroke="var(--gold)" stroke-width="2.5"/>
+      <circle cx="${p15[0]}" cy="${p15[1]}" r="4.5" fill="var(--navy)"/>
+      <circle cx="${p25[0]}" cy="${p25[1]}" r="4.5" fill="var(--red)"/>
+      <text class="aval" x="${p15[0]}" y="${p15[1]-9}" text-anchor="start">${usd(t.g15)}</text>
+      <text class="aval" x="${p25[0]}" y="${p25[1]-9}" text-anchor="end">${usd(t.g25)}</text>
+      <text class="anchor" x="${p15[0]}" y="${H-9}" text-anchor="start">2015</text>
+      <text class="anchor" x="${p25[0]}" y="${H-9}" text-anchor="end">2025</text>
+    </svg>`;
+}
+function renderCalcMethod(){
+  $("#calc-method").innerHTML = `<b>Methodology.</b> SSB figures sourced from the <b>SSA OASDI Beneficiaries by State and County report (Dec 2023)</b>; Elder Index figures from the <b>UMass Boston Gerontology Institute (2025)</b>. Coverage percentages may differ slightly from the published 2025 infographic figures due to benefit vintage.${''}`;
+}
+
+// calculator control wiring (aria-pressed kept in sync)
+$("#c-state").onchange=e=>{ calc.state=e.target.value; renderCalc(); };
+["c-household","c-housing","c-health"].forEach(group=>{
+  const key=group.split("-")[1];
+  $$("#"+group+" button").forEach(b=>{
+    b.setAttribute("aria-pressed", b.classList.contains("on")?"true":"false");
+    b.onclick=()=>{
+      $$("#"+group+" button").forEach(x=>{ x.classList.remove("on"); x.setAttribute("aria-pressed","false"); });
+      b.classList.add("on"); b.setAttribute("aria-pressed","true");
+      calc[key]=b.dataset.v; renderCalc();
+    };
+  });
+});
+$("#c-ssb").oninput=renderCalc;
+$("#c-extra").oninput=renderCalc;
+
+/* ---- Print: close any open overlay, then print only the infographic ---- */
+window.addEventListener("beforeprint", closeOverlays);
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderMethod("#dash-method");
+renderCalcMethod();
+initCompare();   // compare-states selectors
+update();        // dashboard (paints once map is ready too)
+renderCalc();    // calculator
+loadMap();       // async map geometry
+</script>
+</body>
+</html>
