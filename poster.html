@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Symposium Poster — How Far Does Social Security Go? (Rubin, CSDRA · UMass Boston)</title>
+
+<style>
+:root{
+  --navy:#003865;        /* UMass Boston primary */
+  --navy-2:#0a4d80;
+  --gold:#F2A900;        /* UMass Boston accent */
+  --gold-dark:#c98a00;
+  --ink:#16242f;
+  --muted:#51626f;
+  --line:#d3dce5;
+  --red:#c0392b;
+  --green:#1e8449;
+  --paper:#ffffff;
+  --soft:#f4f7fa;
+
+  --poster-w:48in;
+  --poster-h:36in;
+  --preview-scale:.30;
+
+  --serif:"Times New Roman", Times, "Liberation Serif", "Nimbus Roman", serif;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--serif);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* ---------- screen preview (scaled) ---------- */
+@media screen{
+  html,body{background:#2f343a}
+  .stage{
+    width:calc(var(--poster-w) * var(--preview-scale));
+    height:calc(var(--poster-h) * var(--preview-scale));
+    margin:26px auto;
+    box-shadow:0 18px 60px rgba(0,0,0,.5);
+  }
+  .poster{transform:scale(var(--preview-scale));transform-origin:top left}
+  .printbar{position:fixed;top:14px;right:16px;z-index:99;background:var(--navy);color:#fff;border:none;
+    font-family:var(--serif);font-weight:700;font-size:14px;padding:11px 18px;border-radius:8px;cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  .printbar:hover{background:var(--navy-2)}
+  .hint{position:fixed;top:60px;right:16px;z-index:99;color:#cdd6df;font-size:12px;max-width:230px;text-align:right;line-height:1.5;font-family:var(--serif)}
+}
+
+/* ---------- poster canvas ---------- */
+.poster{
+  width:var(--poster-w);
+  height:var(--poster-h);
+  background:var(--paper);
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  font-size:32px;
+  line-height:1.42;
+}
+
+h1,h2,h3,h4{font-family:var(--serif);margin:0;color:var(--navy);line-height:1.12;font-weight:700}
+
+/* ===== TITLE BANNER ===== */
+.banner{
+  background:linear-gradient(110deg,var(--navy) 0%, #06304f 60%, #0a3a5e 100%);
+  color:#fff;padding:.46in .7in .46in .8in;display:flex;align-items:center;gap:.6in;
+  border-bottom:.14in solid var(--gold);
+}
+.banner .titlewrap{flex:1}
+.banner .eyebrow{font-family:var(--serif);font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  font-size:28px;color:var(--gold);margin-bottom:.12in}
+.banner h1{color:#fff;font-weight:700;font-size:108px;letter-spacing:-.5px;font-style:normal}
+.banner h1 .sub{display:block;font-weight:400;font-style:italic;font-size:52px;color:#cfe0ee;margin-top:.12in}
+.banner .byline{margin-top:.26in;font-size:40px;color:#eaf2f9;font-weight:700}
+.banner .byline b{color:#fff}
+.banner .affil{font-size:30px;color:#b9cee0;margin-top:.06in;font-style:italic}
+.banner .logobox{
+  flex:none;width:4.5in;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#fff;border-radius:.16in;padding:.32in .3in;gap:.14in;box-shadow:0 .06in .18in rgba(0,0,0,.25)}
+.banner .logobox svg{width:2.6in;height:auto;display:block}
+.banner .logobox .ls{font-size:25px;color:var(--muted);font-weight:700;text-align:center;font-style:italic}
+
+/* ===== HERO STAT BAND (full width) ===== */
+.hero{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  background:linear-gradient(180deg,#06304f,var(--navy));
+  border-bottom:.1in solid var(--gold);
+}
+.hero .h{padding:.3in .5in;color:#fff;border-right:1px solid rgba(255,255,255,.16);display:flex;flex-direction:column;justify-content:center}
+.hero .h:last-child{border-right:none}
+.hero .h.accent{background:linear-gradient(140deg,var(--gold),#e09600);color:#26303a}
+.hero .h .big{font-family:var(--serif);font-weight:700;font-size:96px;line-height:.92}
+.hero .h .lab{font-size:28px;margin-top:.08in;line-height:1.28}
+.hero .h .lab b{font-weight:700}
+
+/* ===== COLUMN BODY ===== */
+.body{flex:1;display:grid;grid-template-columns:1.04fr 1.06fr 1fr;gap:.42in;padding:.46in .8in .42in;min-height:0}
+.col{display:flex;flex-direction:column;gap:.34in;height:100%;min-height:0}
+
+.box{background:var(--paper);border:2px solid var(--line);border-radius:.14in;padding:.34in .38in;display:flex;flex-direction:column}
+.box.soft{background:var(--soft)}
+.box.navy{background:linear-gradient(150deg,#06304f,var(--navy));color:#fff;border:none}
+.box.navy h2,.box.navy h3{color:#fff}
+.box.grow{flex:1 1 0;min-height:0}
+
+.shead{display:flex;align-items:center;gap:.2in;margin-bottom:.22in;border-bottom:2px solid var(--gold);padding-bottom:.14in}
+.shead .n{flex:none;width:.66in;height:.66in;border-radius:.1in;background:var(--navy);color:#fff;
+  font-family:var(--serif);font-weight:700;font-size:42px;display:grid;place-items:center}
+.box.navy .shead{border-bottom-color:var(--gold)}
+.box.navy .shead .n{background:var(--gold);color:var(--navy)}
+.shead h2{font-size:48px;font-weight:700;letter-spacing:.01em}
+
+p{margin:0 0 .2in}
+.lead{font-size:33px}
+.small{font-size:27px;color:var(--muted)}
+.box.navy .small{color:#cfe0ee}
+b,strong{font-weight:700}
+i,em{font-style:italic}
+
+ul.bul{list-style:none;margin:0;padding:0}
+ul.bul li{position:relative;padding:.13in 0 .13in .44in;border-bottom:1px dashed var(--line)}
+ul.bul li:last-child{border-bottom:none}
+ul.bul li::before{content:"";position:absolute;left:.06in;top:.32in;width:.16in;height:.16in;border-radius:50%;background:var(--gold)}
+
+/* comparison table */
+table.cmp{width:100%;border-collapse:collapse;font-size:29px;margin-top:.04in}
+table.cmp th,table.cmp td{padding:.14in .15in;text-align:right;border-bottom:1px solid var(--line)}
+table.cmp th:first-child,table.cmp td:first-child{text-align:left}
+table.cmp thead th{background:var(--navy);color:#fff;font-weight:700;font-size:28px}
+table.cmp tbody tr.yr td{background:#e9f1f8;font-weight:700;color:var(--navy);font-size:30px}
+table.cmp td.k{color:var(--muted)}
+table.cmp .neg{color:var(--red);font-weight:700}
+table.cmp .pos{color:var(--green);font-weight:700}
+
+/* gap bars */
+.gap{margin:.18in 0 .06in}
+.gap .glab{display:flex;justify-content:space-between;font-size:28px;font-weight:700;margin-bottom:.1in}
+.gap .glab .who{color:#fff}
+.gap .track{height:.56in;border-radius:.08in;overflow:hidden;display:flex;border:2px solid rgba(255,255,255,.25)}
+.gap .cov{background:linear-gradient(90deg,#0d4f7e,#1769a8);color:#fff}
+.gap .unc{background:repeating-linear-gradient(45deg,#9c3326,#9c3326 .14in,#b23f30 .14in,#b23f30 .28in);color:#fff}
+.gap .seg{display:flex;align-items:center;font-size:26px;font-weight:700;padding:0 .16in;white-space:nowrap}
+.gap .capt{display:flex;justify-content:space-between;font-size:25px;color:#cfe0ee;margin-top:.1in}
+.gap .capt .r{color:#ffc2bb;font-weight:700}
+
+.buys{margin-top:.24in;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);border-radius:.12in;padding:.22in .26in}
+.buys h4{font-size:30px;color:#fff;margin-bottom:.14in}
+.buys .brow{display:flex;justify-content:space-between;font-size:27px;padding:.1in 0;border-bottom:1px dashed rgba(255,255,255,.2);color:#dbe7f2}
+.buys .brow:last-child{border-bottom:none}
+.buys .brow b{color:var(--gold);font-weight:700}
+
+/* tile-grid map */
+.mapwrap{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+.tilemap{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:1fr;gap:.07in;flex:1 1 0;min-height:0}
+.tile{border-radius:.06in;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+  font-family:var(--serif);line-height:1;padding:.02in}
+.tile .ab{font-weight:700;font-size:26px}
+.tile .pc{font-weight:400;font-size:20px;opacity:.95;margin-top:.03in}
+.tile.lt{color:#3a2f10}
+.legend{margin-top:.2in}
+.legend .bar{height:.26in;border-radius:.05in;background:linear-gradient(90deg,#c0392b,#e67e22,#F2A900,#7dc34f,#1e8449)}
+.legend .ends{display:flex;justify-content:space-between;font-size:25px;color:var(--muted);margin-top:.08in;font-weight:700}
+.mapnote{font-size:23px;color:var(--muted);font-style:italic;margin-top:.14in;line-height:1.38}
+
+/* least / most cards */
+.lm h4{font-size:30px;margin-bottom:.14in}
+.lm h4 .least{color:var(--red)} .lm h4 .most{color:var(--green)}
+.lmcards{display:grid;grid-template-columns:repeat(4,1fr);gap:.14in;margin-bottom:.24in}
+.lmcards.last{margin-bottom:0}
+.lmc{border:2px solid var(--line);border-radius:.1in;padding:.16in .04in;text-align:center;background:#fff}
+.lmc .pct{font-family:var(--serif);font-weight:700;font-size:50px}
+.lmc.least .pct{color:var(--red)} .lmc.most .pct{color:var(--green)}
+.lmc .nm{font-size:23px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;margin-top:.05in}
+
+/* highlight callout */
+.hl{background:#fff5d8;border-left:.1in solid var(--gold);border-radius:.1in;padding:.24in .28in;font-size:30px;line-height:1.4}
+.hl b{color:var(--navy)}
+
+/* Background box — larger type, paragraphs spread to fill height */
+.bgbox{justify-content:space-between}
+.bgbox p{font-size:41px;line-height:1.52;margin:0}
+.bgbox .lead{font-size:45px;line-height:1.46}
+.bgbox .hl{font-size:37px;line-height:1.45}
+
+/* ===== BOTTOM BANNER ===== */
+.footer{
+  background:linear-gradient(90deg,var(--navy) 0%, var(--navy) 60%, var(--gold) 60%, var(--gold) 100%);
+  color:#fff;display:grid;grid-template-columns:1.55fr 1fr;gap:.6in;padding:.4in .8in;align-items:center;
+  border-top:.14in solid var(--gold)}
+.footer .take{font-size:37px;font-weight:400;line-height:1.34}
+.footer .take .big{font-weight:700}
+.footer .take b{color:var(--gold);font-weight:700}
+.footer .take .imp{font-size:29px;color:#cfe0ee;margin-top:.22in;line-height:1.4}
+.footer .take .imp b{color:#fff}
+.footer .right .reflab{font-family:var(--serif);font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:24px;color:#3a2f10;margin-bottom:.1in}
+.footer .right p{font-size:24px;line-height:1.42;margin:0 0 .12in;color:#2b2410}
+.footer .right .contact{display:flex;align-items:center;gap:.24in;margin-top:.2in}
+.footer .right .contact .lg{flex:none;width:1.55in;height:1.55in;background:#fff;border-radius:.12in;display:grid;place-items:center;padding:.2in}
+.footer .right .contact .lg svg{width:100%;height:auto}
+.footer .right .contact .ct{font-size:25px;color:#2b2410;line-height:1.42}
+.footer .right .contact .ct b{font-weight:700;color:#1a2530}
+
+/* recolor logo */
+.logo-navy svg path{fill:var(--navy) !important}
+
+@media print{
+  html,body{background:#fff}
+  .printbar,.hint{display:none !important}
+  .stage{width:auto;height:auto;margin:0;box-shadow:none}
+  .poster{transform:none}
+  @page{size:48in 36in;margin:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<button class="printbar" onclick="window.print()">🖨 Print / Save as PDF (48×36 in)</button>
+<div class="hint">Preview scaled to ~30%. Print → “Save as PDF”, paper 48×36 in, scale 100%, margins None.</div>
+
+<div class="stage">
+<div class="poster">
+
+  <!-- ===================== TITLE BANNER ===================== -->
+  <div class="banner">
+    <div class="titlewrap">
+      <div class="eyebrow">Gerontology Symposium · Retirement Income Security</div>
+      <h1>How Far Does Social Security Go?
+        <span class="sub">Comparing Average Benefits to the Elder Index across the United States, 2015–2025</span>
+      </h1>
+      <div class="byline"><b>Nathan Rubin</b></div>
+      <div class="affil">Center for Social &amp; Demographic Research on Aging (CSDRA) · Gerontology Institute,
+        Manning College of Nursing &amp; Health Sciences · University of Massachusetts Boston</div>
+    </div>
+    <div class="logobox logo-navy">
+      <span id="logo-banner"></span>
+      <div class="ls">Gerontology Institute · CSDRA</div>
+    </div>
+  </div>
+
+  <!-- ===================== HERO STAT BAND ===================== -->
+  <div class="hero">
+    <div class="h"><div class="big">70%</div><div class="lab">of the Elder Index covered for a <b>single older renter</b></div></div>
+    <div class="h"><div class="big">78%</div><div class="lab">covered for an <b>older couple</b> who rent</div></div>
+    <div class="h accent"><div class="big">91%</div><div class="lab">covered for <b>homeowners with no mortgage</b> — the most-covered group</div></div>
+    <div class="h"><div class="big">$10,328</div><div class="lab">annual <b>gap</b> for a single older renter — about <b>$861 / month</b> unmet</div></div>
+  </div>
+
+  <!-- ===================== BODY (3 columns) ===================== -->
+  <div class="body">
+
+    <!-- ============ COLUMN 1 ============ -->
+    <div class="col">
+      <div class="box soft grow bgbox">
+        <div class="shead"><div class="n">1</div><h2>Background</h2></div>
+        <p class="lead">Social Security is the <b>foundation of retirement income</b> for most older Americans — yet
+          whether it covers the real cost of living independently is rarely measured against a realistic budget.</p>
+        <p>The <b>Elder Index™</b> (UMass Boston Gerontology Institute) estimates what adults aged 65+ truly need to
+          meet basic needs — <b>housing, food, health care, and transportation</b>. Unlike the federal poverty line,
+          it varies by <b>state, household type, housing status, and health</b>.</p>
+        <div class="hl">
+          <b>Research question:</b> What share of the Elder Index does the average Social Security benefit cover —
+          nationally, across all 50 states + DC — and how has that gap changed from 2015 to 2025?
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="shead"><div class="n">2</div><h2>Data &amp; Methods</h2></div>
+        <ul class="bul">
+          <li><b>Elder Index 2025</b> — annual cost of living for older adults, by state × household × housing × health
+            (<span class="small">elderindex.org</span>).</li>
+          <li><b>Social Security benefits</b> — average annual benefit for retired workers, <b>December 2023</b>
+            (SSA OASDI Beneficiaries by State &amp; County, Pub. 13-11954).</li>
+          <li><b>Coverage</b> = average Social Security benefit ÷ Elder Index, for every jurisdiction and
+            household/housing/health combination.</li>
+          <li><b>Annual gap</b> = Elder Index − benefit (the unmet need).</li>
+          <li>State-level couple benefits are <b>estimated</b> from each state's single benefit × the national
+            couple-to-single ratio (no published state figure exists).</li>
+        </ul>
+      </div>
+
+      <div class="box soft">
+        <div class="shead"><div class="n">3</div><h2>Why the Gap Barely Moved</h2></div>
+        <p>Social Security's annual <b>cost-of-living adjustment (COLA)</b> tracks general inflation (CPI-W). But the
+          Elder Index tracks the costs older adults actually face — <b>housing and health care</b> — which rose just
+          as fast. Benefits and needs climbed in step, so coverage held near <b>70%</b> while the
+          <b>dollar shortfall widened</b> — up more than <b>45%</b> in a decade.</p>
+      </div>
+    </div>
+
+    <!-- ============ COLUMN 2 ============ -->
+    <div class="col">
+      <div class="box">
+        <div class="shead"><div class="n">4</div><h2>National Findings</h2></div>
+        <p class="small" style="margin:-.06in 0 .12in">U.S. Elder Index vs. average Social Security benefit · single
+          living alone &amp; couples living together · 2015 vs. 2025.</p>
+        <table class="cmp">
+          <thead><tr><th></th><th>Single</th><th>Couple</th></tr></thead>
+          <tbody>
+            <tr class="yr"><td colspan="3">2025</td></tr>
+            <tr><td class="k">Elder Index</td><td>$34,032</td><td>$47,016</td></tr>
+            <tr><td class="k">Average benefit</td><td>$23,704</td><td>$36,703</td></tr>
+            <tr><td class="k">% of Index covered</td><td><b>69.7%</b></td><td><b>78.1%</b></td></tr>
+            <tr><td class="k">Amount uncovered</td><td class="neg">$10,328</td><td class="neg">$10,313</td></tr>
+            <tr class="yr"><td colspan="3">2015</td></tr>
+            <tr><td class="k">Elder Index</td><td>$23,088</td><td>$33,504</td></tr>
+            <tr><td class="k">Average benefit</td><td>$15,943</td><td>$26,009</td></tr>
+            <tr><td class="k">% of Index covered</td><td><b>69.1%</b></td><td><b>77.6%</b></td></tr>
+            <tr><td class="k">Amount uncovered</td><td class="neg">$7,145</td><td class="neg">$7,495</td></tr>
+          </tbody>
+        </table>
+        <p class="small" style="margin-top:.16in">Over a decade, coverage barely moved
+          (<span class="pos">+0.6 pts</span> for singles), yet the <b>dollar shortfall grew</b> from $7,145 to $10,328.</p>
+      </div>
+
+      <div class="box navy grow">
+        <div class="shead"><div class="n">5</div><h2>The Widening Gap</h2></div>
+        <p class="lead">Benefits and needs rose <b>together</b>, so the <i>percentage</i> held near 70% — but the
+          <b>dollar gap grew more than 45%</b> in ten years.</p>
+
+        <div class="gap">
+          <div class="glab"><span class="who">Single older renter (2025)</span></div>
+          <div class="track">
+            <div class="seg cov" style="width:69.7%">Covered 69.7%</div>
+            <div class="seg unc" style="width:30.3%">Gap 30.3%</div>
+          </div>
+          <div class="capt"><span>$23,704 Social Security</span><span class="r">$10,328 uncovered</span></div>
+        </div>
+        <div class="gap">
+          <div class="glab"><span class="who">Older couple who rent (2025)</span></div>
+          <div class="track">
+            <div class="seg cov" style="width:78.1%">Covered 78.1%</div>
+            <div class="seg unc" style="width:21.9%">Gap 21.9%</div>
+          </div>
+          <div class="capt"><span>$36,703 Social Security</span><span class="r">$10,313 uncovered</span></div>
+        </div>
+
+        <div class="buys" style="margin-top:auto">
+          <h4>What the $10,328 single-renter gap equals each year</h4>
+          <div class="brow"><span>Months of groceries (~$400/mo)</span><b>≈ 26</b></div>
+          <div class="brow"><span>Months of average U.S. rent (~$1,500/mo)</span><b>≈ 6.9</b></div>
+          <div class="brow"><span>Months of Medicare Part B (~$185/mo)</span><b>≈ 56</b></div>
+          <div class="brow"><span>Months of utilities (~$250/mo)</span><b>≈ 41</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ COLUMN 3 ============ -->
+    <div class="col">
+      <div class="box grow">
+        <div class="shead"><div class="n">6</div><h2>Geographic Variation</h2></div>
+        <p class="small" style="margin:-.04in 0 .14in">Share of the Elder Index covered by the average benefit —
+          <b>single older renter, good health</b>, all 50 states + DC.</p>
+        <div class="mapwrap">
+          <div class="tilemap" id="tilemap"></div>
+          <div class="legend">
+            <div class="bar"></div>
+            <div class="ends"><span id="leg-lo">Lower coverage</span><span id="leg-hi">Higher coverage</span></div>
+          </div>
+          <p class="mapnote">Stylized tile-grid cartogram (each square = one jurisdiction). Lowest coverage clusters in
+            California, the Northeast, and other high-cost regions; highest in lower-cost states. Values are
+            state-level estimates; the published slide mapped counties.</p>
+        </div>
+      </div>
+
+      <div class="box soft lm">
+        <div class="shead"><div class="n">7</div><h2>State Extremes</h2></div>
+        <h4>Where Social Security covers the <span class="least">LEAST</span> (single older renter)</h4>
+        <div class="lmcards">
+          <div class="lmc least"><div class="pct">56%</div><div class="nm">California</div></div>
+          <div class="lmc least"><div class="pct">58%</div><div class="nm">New York</div></div>
+          <div class="lmc least"><div class="pct">59%</div><div class="nm">Massachusetts</div></div>
+          <div class="lmc least"><div class="pct">65%</div><div class="nm">Maryland</div></div>
+        </div>
+        <h4>Where Social Security covers the <span class="most">MOST</span> (single older renter)</h4>
+        <div class="lmcards last">
+          <div class="lmc most"><div class="pct">86%</div><div class="nm">West Virginia</div></div>
+          <div class="lmc most"><div class="pct">86%</div><div class="nm">Indiana</div></div>
+          <div class="lmc most"><div class="pct">84%</div><div class="nm">Alabama</div></div>
+          <div class="lmc most"><div class="pct">84%</div><div class="nm">Iowa</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== BOTTOM BANNER ===================== -->
+  <div class="footer">
+    <div>
+      <div class="take">
+        <span class="big">Social Security remains the foundation of retirement income</span> — but for millions of older
+        adults it <b>does not fully cover the basics</b> of housing, health care, food, and transportation.
+        <div class="imp">
+          <b>Implications:</b> Coverage gaps persist and the dollar shortfall is widening, with the heaviest burden on
+          single older renters in high-cost states. Measuring adequacy against the Elder Index — not the poverty line —
+          reveals needs that aggregate statistics hide, informing benefit, housing, and health-care policy.
+        </div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="reflab">References &amp; Sources</div>
+      <p>Elder Index. (2025). <i>The Elder Index™</i> [Public Dataset]. Gerontology Institute, University of
+        Massachusetts Boston. elderindex.org</p>
+      <p>Social Security Administration. (2024). <i>OASDI Beneficiaries by State and County, 2023</i> (SSA Pub. 13-11954).</p>
+      <div class="contact">
+        <div class="lg logo-navy"><span id="logo-footer"></span></div>
+        <div class="ct">
+          <b>Nathan Rubin · CSDRA, UMass Boston</b><br>
+          csdra@umb.edu · elderindex.org<br>
+          Gerontology Institute, Manning College of Nursing &amp; Health Sciences
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /poster -->
+</div><!-- /stage -->
+
+<script>
+/* ---- official UMass Boston beacon logo (Wikimedia Commons, CC) ---- */
+const UMB_LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 149.34744" width="112" height="149.35"><g transform="matrix(1.25 0 0 -1.25 94.801 866.83)"><path d="m1.1152 1.1855v89.32h17.219c-3.139-1.515-5.279-4.925-5.287-8.281 0.059-16.404 40.319-48.255 40.236-58.414-0.008-3.294-3.717-4.311-7.748-4.311-8.365 0.022-31.806 10.824-31.834 26.639 0.016 5.773 3.401 8.939 10.01 10.533l0.471 0.101-0.418 0.254c-1.697 0.976-3.599 1.44-5.51 1.44-5.455-0.011-10.928-3.827-10.928-10.297 0.014-6.237 12.815-31.513 41.465-31.555 1.628 0.004 3.091 0.132 4.418 0.344l-13.729-15.774-38.365 0.0005zm70.731 0l-14.635 16.812c4.65 1.824 6.478 5.13 6.486 7.84-0.063 11.696-41.087 48.468-41.019 58.424 0.045 2.16 0.859 2.464 3.195 2.506 18.653 0.065 52.642-45.643 62.492-58.807 3.927-0.679 3.89-0.159 8.026-0.606l0.49-0.052-0.324 0.381c-9.752 12.843-25.133 41.767-25.127 52.814 0 2.819 0.565 5.08 1.855 6.504 0.829 1.173 2.313 1.801 4.266 1.801 5.924-0.03 13.98-9.819 13.996-21.239v-0.39l0.308 0.236c2.261 1.731 3.331 4.277 3.331 6.811-0.008 7.067-5.382 13.415-12.194 16.285h27.218v-89.32l-38.364-0.0005zm10.66 98.482c-4.164 0-8.299 2.242-8.299 6.852 0 2.79 1.699 5.16 4.326 6.09 0.962 0.35 1.987 0.57 3.012 0.77 1.183 0.25 3.717 0.6 3.717 2.27 0 1.6-2.053 1.99-3.303 1.99-1.345 0-2.754-0.36-3.809-1.22-0.548-0.45-0.833-0.93-1.187-1.54l-3.651 2.85c1.858 3.05 5.671 4.04 9.032 4.04 4.421 0 8.552-2.24 8.552-7.14 0-3.08-1.762-5.23-4.644-6.15-0.991-0.32-2.018-0.55-3.043-0.77-1.124-0.26-3.555-0.61-3.555-2.15 0-1.41 1.793-1.82 2.914-1.82 1.794 0 2.914 0.67 4.037 2.05l3.424-2.79c-1.952-2.44-4.483-3.332-7.523-3.332zm20.194 0c-4.168 0-8.302 2.242-8.302 6.852 0 2.79 1.7 5.16 4.327 6.09 0.961 0.35 1.985 0.57 3.005 0.77 1.19 0.25 3.72 0.6 3.72 2.27 0 1.6-2.05 1.99-3.3 1.99-1.34 0-2.756-0.36-3.81-1.22-0.548-0.45-0.832-0.93-1.186-1.54l-3.652 2.85c1.857 3.05 5.671 4.04 9.028 4.04 4.42 0 8.56-2.24 8.56-7.14 0-3.08-1.77-5.23-4.65-6.15-0.99-0.32-2.02-0.55-3.04-0.77-1.12-0.26-3.556-0.61-3.556-2.15 0-1.41 1.796-1.82 2.916-1.82 1.79 0 2.91 0.67 4.04 2.05l3.42-2.79c-1.95-2.44-4.48-3.332-7.52-3.332zm-101.44 0.352v13.45c0 1.93 0.064 3.46 1.1816 5.09 1.6358 2.41 4.4849 3.21 7.2402 3.21 2.6604 0 5.5744-0.71 7.3024-2.89 1.409-1.76 1.537-3.23 1.537-5.41v-13.45h-4.613v12.52c0 1.6 0.036 3.4-1.537 4.3-0.576 0.32-1.216 0.51-1.887 0.51-1.0895 0-2.2424-0.48-2.818-1.44-0.5776-1-0.5469-2.28-0.5469-3.37v-12.52h-5.8593zm22.922 0v21.36h4.613v-15.37l4.709 15.37h3.459l4.805-15.37v15.37h5.89v-21.36h-8.388l-3.43 10.6-3.17-10.6h-8.488zm33.914 0l-6.727 21.36h4.838l1.184-4.23h6.726l1.217 4.23h6.057l-6.633-21.36h-6.662zm2.689 5.48l2.084 7.17h-4.164l2.08-7.17zm-32.422 23.86c-3.056 0-6.028 1.59-7.332 4.43-0.724 1.58-1.002 3.44-1.002 5.16 0 3.5 1.002 6.86 4.28 8.58 1.248 0.67 2.638 1 4.054 1 5.388 0 8.307-4.19 8.307-9.27 0-3.62-0.861-7.06-4.279-8.89-1.25-0.67-2.637-1.01-4.028-1.01zm19.075 0c-3.612 0-7.196 1.95-7.196 5.95 0 2.42 1.474 4.47 3.748 5.28 0.837 0.3 1.723 0.5 2.614 0.67 1.028 0.22 3.224 0.52 3.224 1.97 0 1.39-1.779 1.72-2.865 1.72-1.163 0-2.387-0.31-3.303-1.06-0.471-0.38-0.725-0.8-1.029-1.33l-3.166 2.48c1.61 2.63 4.918 3.49 7.834 3.49 3.831 0 7.416-1.94 7.416-6.19 0-2.67-1.525-4.53-4.027-5.33-0.861-0.28-1.749-0.48-2.639-0.67-0.971-0.22-3.086-0.53-3.086-1.86 0-1.23 1.558-1.59 2.529-1.59 1.557 0 2.527 0.59 3.5 1.78l2.973-2.42c-1.695-2.11-3.889-2.89-6.527-2.89zm35.595 0c-3.056 0-6.028 1.59-7.332 4.43-0.724 1.58-1.004 3.44-1.004 5.16 0 3.5 1.004 6.86 4.282 8.58 1.248 0.67 2.638 1 4.054 1 5.388 0 8.307-4.19 8.307-9.27 0-3.62-0.861-7.06-4.279-8.89-1.251-0.67-2.637-1.01-4.028-1.01zm-81.947 0.31v18.53h8.6407c1.1944 0 2.4464-0.02 3.6134-0.33 2.277-0.56 3.609-2.25 3.609-4.61 0-2.78-1.638-3.84-4.027-4.62 0.779-0.27 1.418-0.52 2.058-1.05 0.972-0.81 1.582-1.95 1.582-3.22 0-3.45-3.277-4.7-6.22-4.7h-9.2561zm56.053 0v3.89h5.025v14.64h5.088v-14.64h5.025v-3.89h-15.138zm37.922 0v18.53h4.001v-10.5l7.228 10.5h3.97v-18.53h-3.97v9.42l-6.56-9.42h-4.669zm-66.698 3.39c2.694 0 2.975 3.61 2.975 5.56 0 2.05-0.059 6.19-2.975 6.19-2.834 0-2.998-3.83-2.998-5.86s0.164-5.89 2.998-5.89zm54.67 0c2.694 0 2.973 3.61 2.973 5.56 0 2.05-0.057 6.19-2.973 6.19-2.834 0-2.998-3.83-2.998-5.86s0.164-5.89 2.998-5.89zm-76.834 0.14h2.668c1.2778 0 2.5288 0.31 2.5288 1.83 0 1.67-1.113 1.95-2.5034 1.95h-2.6934v-3.78zm0 7.39h2.1113c1.529 0 3.3085 0.22 3.3085 1.94 0 2.03-1.9442 1.94-3.4178 1.94h-2.002v-4.08z" transform="matrix(.8 0 0 -.8 -75.841 693.46)"/></g></svg>`;
+document.getElementById("logo-banner").innerHTML = UMB_LOGO;
+document.getElementById("logo-footer").innerHTML = UMB_LOGO;
+
+/* ---- baked research data (single older renter, good health) ---- */
+const SSA = {"AL":22269,"AK":22050,"AZ":23390,"AR":21477,"CA":22390,"CO":23494,"CT":25363,"DE":25075,"FL":22724,"GA":22307,"HI":22901,"ID":22563,"IL":23209,"IN":23588,"IA":23056,"KS":23784,"KY":21635,"LA":21110,"ME":21788,"MD":24653,"MA":24031,"MI":23967,"MN":24187,"MS":21070,"MO":22432,"MT":21808,"NE":23247,"NV":22110,"NH":25133,"NJ":25325,"NM":21591,"NY":23416,"NC":22912,"ND":22272,"OH":22293,"OK":22276,"OR":23012,"PA":23743,"RI":23659,"SC":23114,"SD":22180,"TN":22675,"TX":22385,"UT":23859,"VT":23531,"VA":23818,"WA":24262,"WV":22066,"WI":23485,"WY":23406,"DC":23002};
+const EI = {"AL":27492,"AK":33252,"AZ":34236,"AR":27396,"CA":41532,"CO":36216,"CT":36900,"DE":33084,"FL":35040,"GA":32700,"HI":41232,"ID":32196,"IL":33312,"IN":28464,"IA":28392,"KS":29064,"KY":28200,"LA":28860,"ME":31956,"MD":39360,"MA":42324,"MI":29700,"MN":32004,"MS":28524,"MO":28044,"MT":32544,"NE":29292,"NV":33000,"NH":36396,"NJ":38736,"NM":29796,"NY":41676,"NC":31092,"ND":29292,"OH":28200,"OK":28164,"OR":33720,"PA":30876,"RI":34152,"SC":30900,"SD":28584,"TN":30456,"TX":32100,"UT":32388,"VT":35136,"VA":35016,"WA":37656,"WV":26580,"WI":29376,"WY":29208,"DC":43020};
+
+const GRID = {
+  AK:[1,1], ME:[1,12], VT:[2,11], NH:[2,12],
+  WA:[3,1], ID:[3,2], MT:[3,3], ND:[3,4], MN:[3,5], IL:[3,6], WI:[3,7], MI:[3,8], NY:[3,10], RI:[3,11], MA:[3,12],
+  OR:[4,1], NV:[4,2], WY:[4,3], SD:[4,4], IA:[4,5], IN:[4,6], OH:[4,7], PA:[4,8], NJ:[4,10], CT:[4,11],
+  CA:[5,1], UT:[5,2], CO:[5,3], NE:[5,4], MO:[5,5], KY:[5,6], WV:[5,7], VA:[5,8], MD:[5,9], DE:[5,10], DC:[5,11],
+  AZ:[6,2], NM:[6,3], KS:[6,4], AR:[6,5], TN:[6,6], NC:[6,7], SC:[6,8],
+  OK:[7,4], LA:[7,5], MS:[7,6], AL:[7,7], GA:[7,8],
+  HI:[8,1], TX:[8,4], FL:[8,9]
+};
+
+const cov = ab => SSA[ab] / EI[ab] * 100;
+const abbrs = Object.keys(GRID);
+const vals = abbrs.map(cov);
+const lo = Math.min(...vals), hi = Math.max(...vals);
+
+const STOPS = [[192,57,43],[230,126,34],[242,169,0],[125,195,79],[30,132,73]];
+function colorFor(v){
+  const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+  const seg = t * (STOPS.length - 1);
+  const i = Math.min(STOPS.length - 2, Math.floor(seg));
+  const f = seg - i, a = STOPS[i], b = STOPS[i+1];
+  const c = [0,1,2].map(k => Math.round(a[k] + (b[k]-a[k]) * f));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+const lightText = v => { const t=(v-lo)/(hi-lo); return t>0.32 && t<0.62; };
+
+const map = document.getElementById("tilemap");
+abbrs.forEach(ab=>{
+  const [r,c] = GRID[ab], v = cov(ab);
+  const d = document.createElement("div");
+  d.className = "tile" + (lightText(v) ? " lt" : "");
+  d.style.gridRow = r; d.style.gridColumn = c;
+  d.style.background = colorFor(v);
+  d.innerHTML = `<span class="ab">${ab}</span><span class="pc">${Math.round(v)}%</span>`;
+  map.appendChild(d);
+});
+document.getElementById("leg-lo").textContent = `Lower · ${Math.round(lo)}%`;
+document.getElementById("leg-hi").textContent = `${Math.round(hi)}% · Higher`;
+</script>
+</body>
+</html>
